@@ -1,0 +1,190 @@
+{
+  "users": [
+    {
+      "id": "admin-therum",
+      "username": "therum",
+      "email": "therum@admin.com",
+      "password": "admin",
+      "role": "admin",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80"
+    },
+    {
+      "id": "user-sample",
+      "username": "vn_lover",
+      "email": "vn_lover@gmail.com",
+      "password": "user123",
+      "role": "user",
+      "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"
+    }
+  ],
+  "games": [
+    {
+      "id": "game-1779881996458",
+      "title": "New Hoziron [v0.4 Early]",
+      "slug": "new-hoziron-v04-early",
+      "shortDescription": "Một người đàn ông còn lại gì sau khi cha anh ta mất tích, và bạn gái cũ của anh ta kiên quyết chia tay anh ta mà dường như chẳng có lý do gì?",
+      "description": "Sau khi cha đột ngột mất tích và bạn gái cũ lạnh lùng rời bỏ mà không để lại bất kỳ lời giải thích nào, Hirase Tatsuya chỉ còn lại một trái tim trống rỗng cùng những ngày tháng lặp đi lặp lại đầy vô vị.\n\n\n*## “Mọi thứ đã thay đổi kể từ khi anh gặp em.”*\n\n\n> Cuộc gặp gỡ định mệnh ấy đã kéo Tatsuya vào một bí ẩn có thể làm rung chuyển cả đất nước, thậm chí là toàn bộ thế giới. Hãy cùng khám phá sự thật đằng sau sự mất tích của cha cậu, đồng thời trải qua những cuộc gặp gỡ ngọt ngào nhưng cũng đầy tiếc nuối với các cô gái trên hành trình định mệnh này.\n",
+      "coverUrl": "https://attachments.f95zone.to/2023/01/2306338_1672759041037.png",
+      "bannerUrl": "https://media.discordapp.net/attachments/1502285206516924546/1504276538143674429/0EtD8.jpg?ex=6a1789b2&is=6a163832&hm=75980503f2978e4c37ffe9083b810e0d6f103c9bea76d3036986accd0720be72&=&format=webp&width=1567&height=560",
+      "creator": "therum",
+      "developer": "Kawaiisukebe",
+      "publisher": "Chưa rõ",
+      "status": "Hoàn thành",
+      "engine": "RenPy",
+      "platforms": [
+        "Windows",
+        "Android"
+      ],
+      "ageRating": "18+",
+      "viewsCount": 3,
+      "downloadsCount": 0,
+      "bookmarksCount": 0,
+      "tags": [
+        "Chương Trình Việt Hóa",
+        "Action",
+        "Fantasy",
+        "Slice of Life",
+        "Drama",
+        "School Life",
+        "Romance"
+      ],
+      "downloadLinks": [
+        {
+          "label": "🖥️ Google Drive",
+          "url": "https://drive.google.com/file/d/19xAcYikoYN5bSV0BLxfAe8rjqlQLUSfw/view?usp=sharing"
+        },
+        {
+          "label": "🖥️ Pixeldrain",
+          "url": "https://pixeldrain.com/u/dmRyE3aS"
+        },
+        {
+          "label": "📱 Google Drive",
+          "url": "https://drive.google.com/file/d/1aEYjGyIWIn2OuDbuf7aM-LIiCWBVU-uB/view?usp=sharing"
+        },
+        {
+          "label": "📱 Pixeldrain",
+          "url": "https://pixeldrain.com/u/beE6EGqY"
+        }
+      ],
+      "changelogs": [
+        {
+          "version": "v1.0",
+          "date": "2026-05-27",
+          "content": "Chương trình phát hành bản dịch đầu tiên."
+        }
+      ],
+      "screenshots": [
+        "https://attachments.f95zone.to/2023/01/2306338_1672759041037.png",
+        "https://media.discordapp.net/attachments/1502285206516924546/1504276538693124196/36GLb4.png?ex=6a1789b2&is=6a163832&hm=c83520587c8afc783e6626a875a28c2ff1ba1f3152050fdd12857c249d1cd3de&=&format=webp&quality=lossless",
+        "https://media.discordapp.net/attachments/1502285206516924546/1504276538999439360/DGz2jr.png?ex=6a1789b3&is=6a163833&hm=7c00296ebd1145fc23cbc2b327a2c831915568402bd3867b4b070f721b4b50f2&=&format=webp&quality=lossless",
+        "https://media.discordapp.net/attachments/1502285206516924546/1504276539410223154/rMIyac.png?ex=6a1789b3&is=6a163833&hm=c14a7157db226e955e3db89ee29b665fb27dcdc0d28bcc6a98f28a9e8706b691&=&format=webp&quality=lossless",
+        "https://media.discordapp.net/attachments/1502285206516924546/1504276539699888218/rmQDD6.png?ex=6a1789b3&is=6a163833&hm=30ed8041612b86e4170c570ad9f26730eb61f1c60c73ccf9dc605d60878b8d5e&=&format=webp&quality=lossless",
+        "https://media.discordapp.net/attachments/1502285206516924546/1504276540022722710/yq_8M0.png?ex=6a1789b3&is=6a163833&hm=07a26150a17b6354c85ba210fe79a8cd752e4822a54e5e8ad60a5c8fcdc8f373&=&format=webp&quality=lossless"
+      ],
+      "createdAt": "2026-05-27T11:39:56.458Z",
+      "updatedAt": "2026-05-27T11:43:36.791Z",
+      "uploaderId": "admin-therum",
+      "uploaderName": "therum"
+    }
+  ],
+  "bookmarks": [],
+  "brokenReports": [],
+  "tags": [
+    {
+      "id": "t1",
+      "name": "Romance",
+      "slug": "romance",
+      "type": "genre"
+    },
+    {
+      "id": "t2",
+      "name": "Drama",
+      "slug": "drama",
+      "type": "genre"
+    },
+    {
+      "id": "t3",
+      "name": "Slice of Life",
+      "slug": "slice-of-life",
+      "type": "genre"
+    },
+    {
+      "id": "t4",
+      "name": "Action",
+      "slug": "action",
+      "type": "genre"
+    },
+    {
+      "id": "t5",
+      "name": "Fantasy",
+      "slug": "fantasy",
+      "type": "genre"
+    },
+    {
+      "id": "t6",
+      "name": "Mystery",
+      "slug": "mystery",
+      "type": "genre"
+    },
+    {
+      "id": "t7",
+      "name": "Sci-Fi",
+      "slug": "sci-fi",
+      "type": "genre"
+    },
+    {
+      "id": "t8",
+      "name": "Psychological",
+      "slug": "psychological",
+      "type": "genre"
+    },
+    {
+      "id": "t9",
+      "name": "Thriller",
+      "slug": "thriller",
+      "type": "genre"
+    },
+    {
+      "id": "t10",
+      "name": "Gothic",
+      "slug": "gothic",
+      "type": "genre"
+    },
+    {
+      "id": "t11",
+      "name": "Tragedy",
+      "slug": "tragedy",
+      "type": "genre"
+    },
+    {
+      "id": "t12",
+      "name": "Horror",
+      "slug": "horror",
+      "type": "genre"
+    },
+    {
+      "id": "t13",
+      "name": "School Life",
+      "slug": "school-life",
+      "type": "genre"
+    },
+    {
+      "id": "t14",
+      "name": "Chương Trình Việt Hóa",
+      "slug": "chuong-trinh-viet-hoa",
+      "type": "status"
+    },
+    {
+      "id": "t15",
+      "name": "Đặc Sắc",
+      "slug": "dac-sac",
+      "type": "feature"
+    },
+    {
+      "id": "t16",
+      "name": "Hoàn Thành",
+      "slug": "hoan-thanh",
+      "type": "status"
+    }
+  ]
+}

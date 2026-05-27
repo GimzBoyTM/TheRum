@@ -1,0 +1,6 @@
+{
+  "name": "TheRum",
+  "description": "Nền tảng chia sẻ Game Việt hóa Visual Novel của TheRum",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
