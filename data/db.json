@@ -15,6 +15,22 @@
       "password": "user123",
       "role": "user",
       "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"
+    },
+    {
+      "id": "user-1779887623393",
+      "username": "tester67",
+      "email": "tester67@gmail.com",
+      "password": "tester67pwd",
+      "role": "user",
+      "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=tester67"
+    },
+    {
+      "id": "user-1779888593634",
+      "username": "lmao",
+      "email": "lmao@test.com",
+      "password": "thanh123",
+      "role": "user",
+      "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=lmao"
     }
   ],
   "games": [
@@ -36,8 +52,8 @@
         "Android"
       ],
       "ageRating": "18+",
-      "viewsCount": 3,
-      "downloadsCount": 0,
+      "viewsCount": 12,
+      "downloadsCount": 3,
       "bookmarksCount": 0,
       "tags": [
         "Chương Trình Việt Hóa",
@@ -185,6 +201,26 @@
       "name": "Hoàn Thành",
       "slug": "hoan-thanh",
       "type": "status"
+    }
+  ],
+  "gameRequests": [
+    {
+      "id": "req-1779888631206",
+      "title": "CÁI QUẦN QUÈ GÌ ĐÓ",
+      "originalName": "TÔI KHÔNG BIẾT",
+      "description": "CÁI GÌ ĐÓ ĐỂ GIỚI THIỆU",
+      "platforms": [
+        "Windows",
+        "Android"
+      ],
+      "userId": "user-1779888593634",
+      "username": "lmao",
+      "votes": [
+        "user-1779888593634",
+        "admin-therum"
+      ],
+      "status": "Đã hoàn thành",
+      "createdAt": "2026-05-27T13:30:31.206Z"
     }
   ]
 }
