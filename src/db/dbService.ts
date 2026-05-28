@@ -311,7 +311,11 @@ export const db = {
 
   saveData: (data: any) => {
     ensureDbExists();
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    try {
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn("Warning: Failed to write database to disk (read-only filesystem):", err);
+    }
   },
 
   // Users Helpers

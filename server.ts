@@ -3,9 +3,8 @@ import path from 'path';
 import { db } from './src/db/dbService';
 import { Game, User, BrokenReport, GameRequest } from './src/types';
 
-async function startServer() {
-  const app = express();
-  const PORT = process.env.PORT || 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
 
@@ -109,7 +108,7 @@ async function startServer() {
     }
 
     const users = db.getUsers();
-    const user = users.find(u => 
+    const user = users.find(u =>
       (u.username.toLowerCase() === usernameOrEmail.toLowerCase() || u.email.toLowerCase() === usernameOrEmail.toLowerCase()) &&
       u.password === password
     );
@@ -157,8 +156,8 @@ async function startServer() {
     // Text search
     if (search) {
       const q = String(search).toLowerCase();
-      filteredGames = filteredGames.filter(g => 
-        g.title.toLowerCase().includes(q) || 
+      filteredGames = filteredGames.filter(g =>
+        g.title.toLowerCase().includes(q) ||
         g.shortDescription.toLowerCase().includes(q) ||
         g.developer.toLowerCase().includes(q) ||
         g.creator.toLowerCase().includes(q)
@@ -169,7 +168,7 @@ async function startServer() {
     if (tag) {
       const isArr = Array.isArray(tag);
       const tagsToFilter = isArr ? (tag as string[]) : [String(tag)];
-      filteredGames = filteredGames.filter(g => 
+      filteredGames = filteredGames.filter(g =>
         tagsToFilter.every(t => g.tags.includes(t))
       );
     }
@@ -372,8 +371,8 @@ async function startServer() {
       // Check if user has an active request in "Chờ duyệt" or "Đã duyệt" status
       const activeRequest = requests.find(r => r.userId === req.user.id && (r.status === 'Chờ duyệt' || r.status === 'Đã duyệt'));
       if (activeRequest) {
-        return res.status(400).json({ 
-          error: `Bạn đã gửi một yêu cầu ("${activeRequest.title}") đang ở trạng thái "${activeRequest.status}". Vui lòng đợi nhóm dịch xử lý chuyển sang "Đang tiến hành" hoặc "Đã hoàn thành" để có thể tiếp tục gửi yêu cầu mới!` 
+        return res.status(400).json({
+          error: `Bạn đã gửi một yêu cầu ("${activeRequest.title}") đang ở trạng thái "${activeRequest.status}". Vui lòng đợi nhóm dịch xử lý chuyển sang "Đang tiến hành" hoặc "Đã hoàn thành" để có thể tiếp tục gửi yêu cầu mới!`
         });
       }
 
@@ -672,23 +671,32 @@ async function startServer() {
 
   // Vite development server setup
   if (!isProd) {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+    import('vite').then(({ createServer: createViteServer }) => {
+      createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      }).then(vite => {
+        app.use(vite.middlewares);
+        if (!process.env.VERCEL) {
+          app.listen(PORT, '0.0.0.0', () => {
+            console.log(`TheRum custom backend server running on http://0.0.0.0:${PORT} (dev)`);
+          });
+        }
+      }).catch(err => {
+        console.error("Failed to start Vite dev server:", err);
+      });
     });
-    app.use(vite.middlewares);
   } else {
     const distPath = __dirname;
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+    if (!process.env.VERCEL) {
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`TheRum custom backend server running on http://0.0.0.0:${PORT} (prod)`);
+      });
+    }
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`TheRum custom backend server running on http://0.0.0.0:${PORT}`);
-  });
-}
-
-startServer();
+export default app;
