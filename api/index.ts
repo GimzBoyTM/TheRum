@@ -62,291 +62,309 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   // =================== API ENDPOINTS ===================
 
   // 1. Authentication
-  app.post('/api/auth/register', (req, res) => {
-    const { username, email, password, captchaVerified } = req.body;
-    if (!captchaVerified) {
-      return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
-    }
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Vui lòng cung cấp đầy đủ thông tin đăng ký' });
-    }
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { username, email, password, captchaVerified } = req.body;
+      if (!captchaVerified) {
+        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      }
+      if (!username || !email || !password) {
+        return res.status(400).json({ error: 'Vui lòng cung cấp đầy đủ thông tin đăng ký' });
+      }
 
-    const users = db.getUsers();
-    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-      return res.status(400).json({ error: 'Tên tài khoản này đã tồn tại' });
+      if (await db.checkUsernameExists(username)) {
+        return res.status(400).json({ error: 'Tên tài khoản này đã tồn tại' });
+      }
+      if (await db.checkEmailExists(email)) {
+        return res.status(400).json({ error: 'Email này đã tồn tại' });
+      }
+
+      const newUser: User = {
+        id: 'user-' + Date.now(),
+        username,
+        email,
+        password,
+        role: 'user',
+        avatarUrl: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(username)}`
+      };
+
+      await db.addUser(newUser);
+
+      const token = generateToken(newUser);
+      res.status(201).json({
+        message: 'Đăng ký thành công',
+        token,
+        user: { id: newUser.id, username: newUser.username, email: newUser.email, role: newUser.role, avatarUrl: newUser.avatarUrl }
+      });
+    } catch (err: any) {
+      console.error('Register error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi đăng ký' });
     }
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return res.status(400).json({ error: 'Email này đã tồn tại' });
-    }
-
-    const newUser: User = {
-      id: 'user-' + Date.now(),
-      username,
-      email,
-      password, // simplistic password storage for demo/sandbox integrity
-      role: 'user',
-      avatarUrl: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(username)}`
-    };
-
-    db.addUser(newUser);
-
-    const token = generateToken(newUser);
-    res.status(201).json({
-      message: 'Đăng ký thành công',
-      token,
-      user: { id: newUser.id, username: newUser.username, email: newUser.email, role: newUser.role, avatarUrl: newUser.avatarUrl }
-    });
   });
 
-  app.post('/api/auth/login', (req, res) => {
-    const { usernameOrEmail, password, captchaVerified } = req.body;
-    if (!captchaVerified) {
-      return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
-    }
-    if (!usernameOrEmail || !password) {
-      return res.status(400).json({ error: 'Vui lòng điền tài khoản và mật khẩu' });
-    }
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { usernameOrEmail, password, captchaVerified } = req.body;
+      if (!captchaVerified) {
+        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      }
+      if (!usernameOrEmail || !password) {
+        return res.status(400).json({ error: 'Vui lòng điền tài khoản và mật khẩu' });
+      }
 
-    const users = db.getUsers();
-    const user = users.find(u =>
-      (u.username.toLowerCase() === usernameOrEmail.toLowerCase() || u.email.toLowerCase() === usernameOrEmail.toLowerCase()) &&
-      u.password === password
-    );
+      const user = await db.findUserByLogin(usernameOrEmail, password);
+      if (!user) {
+        return res.status(401).json({ error: 'Thông tin tài khoản hoặc mật khẩu không đúng' });
+      }
 
-    if (!user) {
-      return res.status(401).json({ error: 'Thông tin tài khoản hoặc mật khẩu không đúng' });
+      const token = generateToken(user);
+      res.json({
+        message: 'Đăng nhập thành công',
+        token,
+        user: { id: user.id, username: user.username, email: user.email, role: user.role, avatarUrl: user.avatarUrl }
+      });
+    } catch (err: any) {
+      console.error('Login error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi đăng nhập' });
     }
-
-    const token = generateToken(user);
-    res.json({
-      message: 'Đăng nhập thành công',
-      token,
-      user: { id: user.id, username: user.username, email: user.email, role: user.role, avatarUrl: user.avatarUrl }
-    });
   });
 
-  app.get('/api/auth/me', (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Chưa đăng nhập' });
-    }
-    const token = authHeader.split(' ')[1];
-    const userPayload = verifyToken(token);
-    if (!userPayload) {
-      return res.status(401).json({ error: 'Token không hợp lệ' });
-    }
+  app.get('/api/auth/me', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Chưa đăng nhập' });
+      }
+      const token = authHeader.split(' ')[1];
+      const userPayload = verifyToken(token);
+      if (!userPayload) {
+        return res.status(401).json({ error: 'Token không hợp lệ' });
+      }
 
-    // Refresh user data
-    const users = db.getUsers();
-    const user = users.find(u => u.id === userPayload.id);
-    if (!user) {
-      return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
-    }
+      const user = await db.getUserById(userPayload.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
+      }
 
-    res.json({
-      user: { id: user.id, username: user.username, email: user.email, role: user.role, avatarUrl: user.avatarUrl }
-    });
+      res.json({
+        user: { id: user.id, username: user.username, email: user.email, role: user.role, avatarUrl: user.avatarUrl }
+      });
+    } catch (err: any) {
+      console.error('Auth/me error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ' });
+    }
   });
 
   // 2. Games Catalog & Filters
-  app.get('/api/games', (req, res) => {
-    const { search, tag, engine, platform, status, sortBy, page } = req.query;
-    let filteredGames = db.getGames();
+  app.get('/api/games', async (req, res) => {
+    try {
+      const { search, tag, engine, platform, status, sortBy, page } = req.query;
+      let filteredGames = await db.getGames();
 
-    // Text search
-    if (search) {
-      const q = String(search).toLowerCase();
-      filteredGames = filteredGames.filter(g =>
-        g.title.toLowerCase().includes(q) ||
-        g.shortDescription.toLowerCase().includes(q) ||
-        g.developer.toLowerCase().includes(q) ||
-        g.creator.toLowerCase().includes(q)
-      );
-    }
+      // Text search
+      if (search) {
+        const q = String(search).toLowerCase();
+        filteredGames = filteredGames.filter(g =>
+          g.title.toLowerCase().includes(q) ||
+          g.shortDescription.toLowerCase().includes(q) ||
+          g.developer.toLowerCase().includes(q) ||
+          g.creator.toLowerCase().includes(q)
+        );
+      }
 
-    // Tag filter
-    if (tag) {
-      const isArr = Array.isArray(tag);
-      const tagsToFilter = isArr ? (tag as string[]) : [String(tag)];
-      filteredGames = filteredGames.filter(g =>
-        tagsToFilter.every(t => g.tags.includes(t))
-      );
-    }
+      // Tag filter
+      if (tag) {
+        const isArr = Array.isArray(tag);
+        const tagsToFilter = isArr ? (tag as string[]) : [String(tag)];
+        filteredGames = filteredGames.filter(g =>
+          tagsToFilter.every(t => g.tags.includes(t))
+        );
+      }
 
-    // Engine filter
-    if (engine) {
-      filteredGames = filteredGames.filter(g => g.engine.toLowerCase() === String(engine).toLowerCase());
-    }
+      // Engine filter
+      if (engine) {
+        filteredGames = filteredGames.filter(g => g.engine.toLowerCase() === String(engine).toLowerCase());
+      }
 
-    // Platform filter
-    if (platform) {
-      filteredGames = filteredGames.filter(g => g.platforms.some(p => p.toLowerCase() === String(platform).toLowerCase()));
-    }
+      // Platform filter
+      if (platform) {
+        filteredGames = filteredGames.filter(g => g.platforms.some(p => p.toLowerCase() === String(platform).toLowerCase()));
+      }
 
-    // Status filter
-    if (status) {
-      filteredGames = filteredGames.filter(g => g.status.toLowerCase() === String(status).toLowerCase());
-    }
+      // Status filter
+      if (status) {
+        filteredGames = filteredGames.filter(g => g.status.toLowerCase() === String(status).toLowerCase());
+      }
 
-    // Sorting
-    if (sortBy) {
-      const sort = String(sortBy);
-      if (sort === 'views') {
-        filteredGames.sort((a, b) => b.viewsCount - a.viewsCount);
-      } else if (sort === 'downloads') {
-        filteredGames.sort((a, b) => b.downloadsCount - a.downloadsCount);
-      } else if (sort === 'bookmarks') {
-        filteredGames.sort((a, b) => b.bookmarksCount - a.bookmarksCount);
-      } else if (sort === 'newest') {
-        filteredGames.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      } else if (sort === 'alphabetical') {
-        filteredGames.sort((a, b) => a.title.localeCompare(b.title));
+      // Sorting
+      if (sortBy) {
+        const sort = String(sortBy);
+        if (sort === 'views') {
+          filteredGames.sort((a, b) => b.viewsCount - a.viewsCount);
+        } else if (sort === 'downloads') {
+          filteredGames.sort((a, b) => b.downloadsCount - a.downloadsCount);
+        } else if (sort === 'bookmarks') {
+          filteredGames.sort((a, b) => b.bookmarksCount - a.bookmarksCount);
+        } else if (sort === 'newest') {
+          filteredGames.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        } else if (sort === 'alphabetical') {
+          filteredGames.sort((a, b) => a.title.localeCompare(b.title));
+        } else {
+          filteredGames.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        }
       } else {
-        // default update time
         filteredGames.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       }
-    } else {
-      // default newest updated
-      filteredGames.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+      // Pagination
+      const limit = 6;
+      const activePage = Math.max(1, parseInt(String(page || 1)));
+      const totalCount = filteredGames.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      const paginatedGames = filteredGames.slice((activePage - 1) * limit, activePage * limit);
+
+      res.json({
+        games: paginatedGames,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: activePage,
+          limit
+        }
+      });
+    } catch (err: any) {
+      console.error('GET /api/games error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi tải danh sách game' });
     }
+  });
 
-    // Pagination
-    const limit = 6;
-    const activePage = Math.max(1, parseInt(String(page || 1)));
-    const totalCount = filteredGames.length;
-    const totalPages = Math.ceil(totalCount / limit);
-    const paginatedGames = filteredGames.slice((activePage - 1) * limit, activePage * limit);
+  app.get('/api/games/tags', async (req, res) => {
+    try {
+      res.json(await db.getTags());
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải tags' });
+    }
+  });
 
-    res.json({
-      games: paginatedGames,
-      pagination: {
-        totalCount,
-        totalPages,
-        currentPage: activePage,
-        limit
+  app.get('/api/config', async (req, res) => {
+    try {
+      res.json(await db.getFilterConfig());
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải cấu hình' });
+    }
+  });
+
+  app.post('/api/config', adminMiddleware, async (req, res) => {
+    try {
+      const { genres, engines, platforms } = req.body;
+      await db.saveFilterConfig({ genres, engines, platforms });
+      const config = await db.getFilterConfig();
+      res.json({ message: 'Cập nhật danh sách bộ lọc cấu hình thành công!', config });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi cập nhật cấu hình' });
+    }
+  });
+
+  app.get('/api/games/:slug', async (req, res) => {
+    try {
+      const game = await db.getGameBySlug(req.params.slug);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy tựa game này' });
       }
-    });
-  });
 
-  app.get('/api/games/tags', (req, res) => {
-    res.json(db.getTags());
-  });
+      // Increment view count
+      await db.incrementViewCount(game.id);
+      game.viewsCount += 1;
 
-  app.get('/api/config', (req, res) => {
-    res.json(db.getFilterConfig());
-  });
-
-  app.post('/api/config', adminMiddleware, (req, res) => {
-    const { genres, engines, platforms } = req.body;
-    db.saveFilterConfig({ genres, engines, platforms });
-    res.json({ message: 'Cập nhật danh sách bộ lọc cấu hình thành công!', config: db.getFilterConfig() });
-  });
-
-  app.get('/api/games/:slug', (req, res) => {
-    const games = db.getGames();
-    const gameIndex = games.findIndex(g => g.slug === req.params.slug);
-    if (gameIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy tựa game này' });
+      res.json(game);
+    } catch (err: any) {
+      console.error('GET /api/games/:slug error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ' });
     }
-
-    // Increment view count dynamically
-    games[gameIndex].viewsCount += 1;
-    db.saveGames(games);
-
-    res.json(games[gameIndex]);
   });
 
   // Increment download count (called when user clicks download)
-  app.post('/api/games/:id/download-click', (req, res) => {
-    const games = db.getGames();
-    const game = games.find(g => g.id === req.params.id);
-    if (!game) {
-      return res.status(404).json({ error: 'Không tìm thấy game' });
+  app.post('/api/games/:id/download-click', async (req, res) => {
+    try {
+      const game = await db.getGameById(req.params.id);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy game' });
+      }
+      const count = await db.incrementDownloadCount(req.params.id);
+      res.json({ count });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi máy chủ' });
     }
-    game.downloadsCount += 1;
-    db.saveGames(games);
-    res.json({ count: game.downloadsCount });
   });
 
   // 3. User Actions (Bookmarks, Reports)
-  app.post('/api/games/:id/bookmark', authMiddleware, (req: any, res) => {
-    const userId = req.user.id;
-    const gameId = req.params.id;
+  app.post('/api/games/:id/bookmark', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const gameId = req.params.id;
 
-    const games = db.getGames();
-    const game = games.find(g => g.id === gameId);
-    if (!game) {
-      return res.status(404).json({ error: 'Không tìm thấy tựa game' });
+      const game = await db.getGameById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy tựa game' });
+      }
+
+      const result = await db.toggleBookmark(userId, gameId);
+      res.json(result);
+    } catch (err: any) {
+      console.error('Bookmark error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ' });
     }
-
-    let bookmarks = db.getBookmarks();
-    const idx = bookmarks.findIndex(b => b.userId === userId && b.gameId === gameId);
-    let bookmarked = false;
-
-    if (idx !== -1) {
-      // Remove
-      bookmarks.splice(idx, 1);
-      game.bookmarksCount = Math.max(0, game.bookmarksCount - 1);
-      bookmarked = false;
-    } else {
-      // Add
-      bookmarks.push({ userId, gameId, createdAt: new Date().toISOString() });
-      game.bookmarksCount += 1;
-      bookmarked = true;
-    }
-
-    db.saveBookmarks(bookmarks);
-    db.saveGames(games);
-
-    res.json({ bookmarked, bookmarksCount: game.bookmarksCount });
   });
 
-  app.get('/api/users/bookmarks', authMiddleware, (req: any, res) => {
-    const userId = req.user.id;
-    const bookmarks = db.getBookmarks().filter(b => b.userId === userId);
-    const games = db.getGames();
-    const bookmarkedGames = games.filter(g => bookmarks.some(b => b.gameId === g.id));
-    res.json(bookmarkedGames);
+  app.get('/api/users/bookmarks', authMiddleware, async (req: any, res) => {
+    try {
+      const bookmarkedGames = await db.getBookmarkedGames(req.user.id);
+      res.json(bookmarkedGames);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải danh sách bookmark' });
+    }
   });
 
-  app.post('/api/games/:id/report', authMiddleware, (req: any, res) => {
-    const { message } = req.body;
-    const gameId = req.params.id;
-    const userId = req.user.id;
-    const username = req.user.username;
+  app.post('/api/games/:id/report', authMiddleware, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      const gameId = req.params.id;
+      const userId = req.user.id;
+      const username = req.user.username;
 
-    if (!message || message.trim() === '') {
-      return res.status(400).json({ error: 'Vui lòng cung cấp nội dung báo lỗi' });
+      if (!message || message.trim() === '') {
+        return res.status(400).json({ error: 'Vui lòng cung cấp nội dung báo lỗi' });
+      }
+
+      const game = await db.getGameById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy tựa game' });
+      }
+
+      const newReport: BrokenReport = {
+        id: 'rep-' + Date.now(),
+        gameId,
+        gameTitle: game.title,
+        userId,
+        username,
+        message,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      await db.addBrokenReport(newReport);
+
+      res.status(201).json({ message: 'Báo lỗi liên kết tải thành công! Quản trị viên của TheRum sẽ khắc phục sớm nhất.' });
+    } catch (err: any) {
+      console.error('Report error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ' });
     }
-
-    const games = db.getGames();
-    const game = games.find(g => g.id === gameId);
-    if (!game) {
-      return res.status(404).json({ error: 'Không tìm thấy tựa game' });
-    }
-
-    const reports = db.getBrokenReports();
-    const newReport: BrokenReport = {
-      id: 'rep-' + Date.now(),
-      gameId,
-      gameTitle: game.title,
-      userId,
-      username,
-      message,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
-
-    reports.push(newReport);
-    db.saveBrokenReports(reports);
-
-    res.status(201).json({ message: 'Báo lỗi liên kết tải thành công! Quản trị viên của TheRum sẽ khắc phục sớm nhất.' });
   });
 
   // 3.5 Game Requests API
-  app.get('/api/requests', (req, res) => {
+  app.get('/api/requests', async (req, res) => {
     try {
-      const requests = db.getGameRequests();
+      const requests = await db.getGameRequests();
       // Sort by vote count descending, then by newest
       requests.sort((a, b) => {
         const diff = (b.votes?.length || 0) - (a.votes?.length || 0);
@@ -359,17 +377,15 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
     }
   });
 
-  app.post('/api/requests', authMiddleware, (req: any, res) => {
-    const { title, originalName, description, platforms } = req.body;
-    if (!title || title.trim() === '') {
-      return res.status(400).json({ error: 'Vui lòng nhập tên game yêu cầu' });
-    }
-
+  app.post('/api/requests', authMiddleware, async (req: any, res) => {
     try {
-      const requests = db.getGameRequests();
+      const { title, originalName, description, platforms } = req.body;
+      if (!title || title.trim() === '') {
+        return res.status(400).json({ error: 'Vui lòng nhập tên game yêu cầu' });
+      }
 
-      // Check if user has an active request in "Chờ duyệt" or "Đã duyệt" status
-      const activeRequest = requests.find(r => r.userId === req.user.id && (r.status === 'Chờ duyệt' || r.status === 'Đã duyệt'));
+      // Check if user has an active request
+      const activeRequest = await db.findActiveRequestByUser(req.user.id);
       if (activeRequest) {
         return res.status(400).json({
           error: `Bạn đã gửi một yêu cầu ("${activeRequest.title}") đang ở trạng thái "${activeRequest.status}". Vui lòng đợi nhóm dịch xử lý chuyển sang "Đang tiến hành" hoặc "Đã hoàn thành" để có thể tiếp tục gửi yêu cầu mới!`
@@ -384,88 +400,79 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
         platforms: Array.isArray(platforms) && platforms.length > 0 ? platforms : ['Windows'],
         userId: req.user.id,
         username: req.user.username,
-        votes: [req.user.id], // Request creator votes for their own request by default
+        votes: [req.user.id],
         status: 'Chờ duyệt',
         createdAt: new Date().toISOString()
       };
 
-      requests.push(newRequest);
-      db.saveGameRequests(requests);
+      await db.addGameRequest(newRequest);
       res.status(201).json(newRequest);
     } catch (err: any) {
+      console.error('Create request error:', err);
       res.status(500).json({ error: 'Không thể gửi yêu cầu dịch game' });
     }
   });
 
-  app.post('/api/requests/:id/vote', authMiddleware, (req: any, res) => {
-    const { id } = req.params;
-    const userId = req.user.id;
-
+  app.post('/api/requests/:id/vote', authMiddleware, async (req: any, res) => {
     try {
-      const requests = db.getGameRequests();
-      const reqIndex = requests.findIndex(r => r.id === id);
-      if (reqIndex === -1) {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const request = await db.getGameRequestById(id);
+      if (!request) {
         return res.status(404).json({ error: 'Không tìm thấy yêu cầu dịch game này' });
       }
 
-      const request = requests[reqIndex];
-      if (!request.votes) {
-        request.votes = [];
-      }
-
-      const voteIdx = request.votes.indexOf(userId);
+      const votes = request.votes || [];
+      const voteIdx = votes.indexOf(userId);
       let voted = false;
+
       if (voteIdx !== -1) {
-        request.votes.splice(voteIdx, 1); // unvote
+        votes.splice(voteIdx, 1);
         voted = false;
       } else {
-        request.votes.push(userId); // vote
+        votes.push(userId);
         voted = true;
       }
 
-      db.saveGameRequests(requests);
-      res.json({ voted, votesCount: request.votes.length, votes: request.votes });
+      await db.updateGameRequestVotes(id, votes);
+      res.json({ voted, votesCount: votes.length, votes });
     } catch (err: any) {
       res.status(500).json({ error: 'Có lỗi xảy ra khi bình chọn' });
     }
   });
 
-  app.post('/api/requests/:id/status', adminMiddleware, (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const validStatuses = ['Chờ duyệt', 'Đã duyệt', 'Đang tiến hành', 'Đã hoàn thành'];
-    if (!status || !validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
-    }
-
+  app.post('/api/requests/:id/status', adminMiddleware, async (req, res) => {
     try {
-      const requests = db.getGameRequests();
-      const reqIndex = requests.findIndex(r => r.id === id);
-      if (reqIndex === -1) {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      const validStatuses = ['Chờ duyệt', 'Đã duyệt', 'Đang tiến hành', 'Đã hoàn thành'];
+      if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
+      }
+
+      const request = await db.getGameRequestById(id);
+      if (!request) {
         return res.status(404).json({ error: 'Không tìm thấy yêu cầu' });
       }
 
-      requests[reqIndex].status = status as any;
-      db.saveGameRequests(requests);
-      res.json(requests[reqIndex]);
+      await db.updateGameRequestStatus(id, status);
+      res.json({ ...request, status });
     } catch (err: any) {
       res.status(500).json({ error: 'Không thể cập nhật trạng thái' });
     }
   });
 
-  app.delete('/api/requests/:id', adminMiddleware, (req, res) => {
-    const { id } = req.params;
-
+  app.delete('/api/requests/:id', adminMiddleware, async (req, res) => {
     try {
-      const requests = db.getGameRequests();
-      const reqIndex = requests.findIndex(r => r.id === id);
-      if (reqIndex === -1) {
+      const { id } = req.params;
+      const request = await db.getGameRequestById(id);
+      if (!request) {
         return res.status(404).json({ error: 'Không tìm thấy yêu cầu cần xóa' });
       }
 
-      requests.splice(reqIndex, 1);
-      db.saveGameRequests(requests);
+      await db.deleteGameRequest(id);
       res.json({ message: 'Đã xóa yêu cầu thành công' });
     } catch (err: any) {
       res.status(500).json({ error: 'Không thể xóa yêu cầu' });
@@ -473,46 +480,36 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   });
 
   // 4. Admin operations (Dashboard, Add, Edit, Delete Games, Manage Reports)
-  app.get('/api/admin/stats', adminMiddleware, (req, res) => {
-    const games = db.getGames();
-    const users = db.getUsers();
-    const reports = db.getBrokenReports();
-    const requests = db.getGameRequests();
-
-    const totalGames = games.length;
-    const totalUsers = users.length;
-    const pendingReports = reports.filter(r => r.status === 'pending').length;
-    const pendingRequests = requests.filter(r => r.status === 'Chờ duyệt').length;
-    const totalDownloads = games.reduce((sum, g) => sum + g.downloadsCount, 0);
-
-    res.json({
-      totalGames,
-      totalUsers,
-      pendingReports,
-      pendingRequests,
-      totalDownloads
-    });
-  });
-
-  app.get('/api/admin/reports', adminMiddleware, (req, res) => {
-    res.json(db.getBrokenReports());
-  });
-
-  app.post('/api/admin/reports/:id/resolve', adminMiddleware, (req, res) => {
-    const reports = db.getBrokenReports();
-    const reportIndex = reports.findIndex(r => r.id === req.params.id);
-    if (reportIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy báo cáo' });
-    }
-
-    reports[reportIndex].status = 'resolved';
-    db.saveBrokenReports(reports);
-    res.json({ message: 'Đã giải quyết báo lỗi liên kết thành công' });
-  });
-
-  app.get('/api/admin/backup', adminMiddleware, (req, res) => {
+  app.get('/api/admin/stats', adminMiddleware, async (req, res) => {
     try {
-      const data = db.getData();
+      const stats = await db.getAdminStats();
+      res.json(stats);
+    } catch (err: any) {
+      console.error('Admin stats error:', err);
+      res.status(500).json({ error: 'Lỗi tải thống kê' });
+    }
+  });
+
+  app.get('/api/admin/reports', adminMiddleware, async (req, res) => {
+    try {
+      res.json(await db.getBrokenReports());
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải báo cáo' });
+    }
+  });
+
+  app.post('/api/admin/reports/:id/resolve', adminMiddleware, async (req, res) => {
+    try {
+      await db.resolveReport(req.params.id);
+      res.json({ message: 'Đã giải quyết báo lỗi liên kết thành công' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi máy chủ' });
+    }
+  });
+
+  app.get('/api/admin/backup', adminMiddleware, async (req, res) => {
+    try {
+      const data = await db.getData();
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', 'attachment; filename=therum-db-backup.json');
       res.send(JSON.stringify(data, null, 2));
@@ -521,13 +518,13 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
     }
   });
 
-  app.post('/api/admin/restore', adminMiddleware, (req, res) => {
+  app.post('/api/admin/restore', adminMiddleware, async (req, res) => {
     try {
       const newData = req.body;
       if (!newData || !Array.isArray(newData.users) || !Array.isArray(newData.games) || !Array.isArray(newData.tags)) {
         return res.status(400).json({ error: 'Cấu trúc dữ liệu phục hồi không hợp lệ! Bản sao lưu cần chứa danh sách users, games và tags.' });
       }
-      db.saveData(newData);
+      await db.saveData(newData);
       res.json({ message: 'Khôi phục dữ liệu ứng dụng thành công!' });
     } catch (err: any) {
       res.status(500).json({ error: 'Không thể khôi phục dữ liệu: ' + err.message });
@@ -535,160 +532,177 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   });
 
   // Create Game
-  app.post('/api/games', adminOrDichGiaMiddleware, (req: any, res) => {
-    const { title, shortDescription, description, coverUrl, bannerUrl, developer, publisher, status, engine, platforms, ageRating, tags, downloadLinks, screenshots } = req.body;
+  app.post('/api/games', adminOrDichGiaMiddleware, async (req: any, res) => {
+    try {
+      const { title, shortDescription, description, coverUrl, bannerUrl, developer, publisher, status, engine, platforms, ageRating, tags, downloadLinks, screenshots } = req.body;
 
-    if (!title || !shortDescription || !description || !status || !engine) {
-      return res.status(400).json({ error: 'Vui lòng điền đầy đủ các thông tin chính của game' });
+      if (!title || !shortDescription || !description || !status || !engine) {
+        return res.status(400).json({ error: 'Vui lòng điền đầy đủ các thông tin chính của game' });
+      }
+
+      const slug = title.toLowerCase()
+        .trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      if (await db.checkSlugExists(slug)) {
+        return res.status(400).json({ error: 'Tiêu đề game trùng hợp hoặc trùng lặp slug, vui lòng thay tên khác' });
+      }
+
+      const newGame: Game = {
+        id: 'game-' + Date.now(),
+        title,
+        slug,
+        shortDescription,
+        description,
+        coverUrl: coverUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=400&h=600&q=80',
+        bannerUrl: bannerUrl || 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=1200&h=400&q=80',
+        creator: req.user.username || 'TheRum',
+        developer: developer || 'Chưa rõ',
+        publisher: publisher || 'Chưa rõ',
+        status,
+        engine,
+        platforms: platforms || ['Windows'],
+        ageRating: ageRating || '16+',
+        viewsCount: 0,
+        downloadsCount: 0,
+        bookmarksCount: 0,
+        tags: tags || [],
+        downloadLinks: downloadLinks || [],
+        changelogs: [{ version: 'v1.0', date: new Date().toISOString().split('T')[0], content: 'Chương trình phát hành bản dịch đầu tiên.' }],
+        screenshots: screenshots || [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        uploaderId: req.user.id,
+        uploaderName: req.user.username
+      };
+
+      await db.addGame(newGame);
+      res.status(201).json(newGame);
+    } catch (err: any) {
+      console.error('Create game error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi tạo game' });
     }
-
-    const slug = title.toLowerCase()
-      .trim()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accent marks
-      .replace(/đ/g, 'd').replace(/Đ/g, 'd')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
-
-    const games = db.getGames();
-    if (games.some(g => g.slug === slug)) {
-      return res.status(400).json({ error: 'Tiêu đề game trùng hợp hoặc trùng lặp slug, vui lòng thay tên khác' });
-    }
-
-    const newGame: Game = {
-      id: 'game-' + Date.now(),
-      title,
-      slug,
-      shortDescription,
-      description,
-      coverUrl: coverUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=400&h=600&q=80',
-      bannerUrl: bannerUrl || 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=1200&h=400&q=80',
-      creator: req.user.username || 'TheRum',
-      developer: developer || 'Chưa rõ',
-      publisher: publisher || 'Chưa rõ',
-      status,
-      engine,
-      platforms: platforms || ['Windows'],
-      ageRating: ageRating || '16+',
-      viewsCount: 0,
-      downloadsCount: 0,
-      bookmarksCount: 0,
-      tags: tags || [],
-      downloadLinks: downloadLinks || [],
-      changelogs: [{ version: 'v1.0', date: new Date().toISOString().split('T')[0], content: 'Chương trình phát hành bản dịch đầu tiên.' }],
-      screenshots: screenshots || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      uploaderId: req.user.id,
-      uploaderName: req.user.username
-    };
-
-    db.addGame(newGame);
-    res.status(201).json(newGame);
   });
 
   // Edit Game
-  app.put('/api/games/:id', adminOrDichGiaMiddleware, (req: any, res) => {
-    const { title, shortDescription, description, coverUrl, bannerUrl, developer, publisher, status, engine, platforms, ageRating, tags, downloadLinks, screenshots, changelogs } = req.body;
-    const gameId = req.params.id;
+  app.put('/api/games/:id', adminOrDichGiaMiddleware, async (req: any, res) => {
+    try {
+      const { title, shortDescription, description, coverUrl, bannerUrl, developer, publisher, status, engine, platforms, ageRating, tags, downloadLinks, screenshots, changelogs } = req.body;
+      const gameId = req.params.id;
 
-    const games = db.getGames();
-    const gameIndex = games.findIndex(g => g.id === gameId);
-    if (gameIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy tựa game này' });
+      const game = await db.getGameById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy tựa game này' });
+      }
+
+      // Role check: If translator, they must be the uploader of this game
+      if (req.user.role === 'dichgia' && game.uploaderId !== req.user.id) {
+        return res.status(403).json({ error: 'Bạn chỉ có quyền sửa game do chính mình đăng tải' });
+      }
+
+      const updatedGame: Game = {
+        ...game,
+        title: title || game.title,
+        shortDescription: shortDescription || game.shortDescription,
+        description: description || game.description,
+        coverUrl: coverUrl || game.coverUrl,
+        bannerUrl: bannerUrl || game.bannerUrl,
+        developer: developer || game.developer,
+        publisher: publisher || game.publisher,
+        status: status || game.status,
+        engine: engine || game.engine,
+        platforms: platforms || game.platforms,
+        ageRating: ageRating || game.ageRating,
+        tags: tags || game.tags,
+        downloadLinks: downloadLinks || game.downloadLinks,
+        screenshots: screenshots || game.screenshots,
+        changelogs: changelogs || game.changelogs,
+        updatedAt: new Date().toISOString()
+      };
+
+      await db.updateGame(updatedGame);
+      res.json(updatedGame);
+    } catch (err: any) {
+      console.error('Update game error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi cập nhật game' });
     }
-
-    // Role check: If translator, they must be the uploader of this game
-    if (req.user.role === 'dichgia' && games[gameIndex].uploaderId !== req.user.id) {
-      return res.status(403).json({ error: 'Bạn chỉ có quyền sửa game do chính mình đăng tải' });
-    }
-
-    const updatedGame: Game = {
-      ...games[gameIndex],
-      title: title || games[gameIndex].title,
-      shortDescription: shortDescription || games[gameIndex].shortDescription,
-      description: description || games[gameIndex].description,
-      coverUrl: coverUrl || games[gameIndex].coverUrl,
-      bannerUrl: bannerUrl || games[gameIndex].bannerUrl,
-      developer: developer || games[gameIndex].developer,
-      publisher: publisher || games[gameIndex].publisher,
-      status: status || games[gameIndex].status,
-      engine: engine || games[gameIndex].engine,
-      platforms: platforms || games[gameIndex].platforms,
-      ageRating: ageRating || games[gameIndex].ageRating,
-      tags: tags || games[gameIndex].tags,
-      downloadLinks: downloadLinks || games[gameIndex].downloadLinks,
-      screenshots: screenshots || games[gameIndex].screenshots,
-      changelogs: changelogs || games[gameIndex].changelogs,
-      updatedAt: new Date().toISOString()
-    };
-
-    games[gameIndex] = updatedGame;
-    db.saveGames(games);
-    res.json(updatedGame);
   });
 
   // Delete Game
-  app.delete('/api/games/:id', adminOrDichGiaMiddleware, (req: any, res) => {
-    const games = db.getGames();
-    const gameIndex = games.findIndex(g => g.id === req.params.id);
-    if (gameIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy game cần xóa' });
-    }
+  app.delete('/api/games/:id', adminOrDichGiaMiddleware, async (req: any, res) => {
+    try {
+      const game = await db.getGameById(req.params.id);
+      if (!game) {
+        return res.status(404).json({ error: 'Không tìm thấy game cần xóa' });
+      }
 
-    // Role check: If translator, they must be the uploader of this game
-    if (req.user.role === 'dichgia' && games[gameIndex].uploaderId !== req.user.id) {
-      return res.status(403).json({ error: 'Bạn chỉ có quyền xóa game do chính mình đăng tải' });
-    }
+      // Role check: If translator, they must be the uploader of this game
+      if (req.user.role === 'dichgia' && game.uploaderId !== req.user.id) {
+        return res.status(403).json({ error: 'Bạn chỉ có quyền xóa game do chính mình đăng tải' });
+      }
 
-    games.splice(gameIndex, 1);
-    db.saveGames(games);
-    res.json({ message: 'Đã xóa game thành công' });
+      await db.deleteGame(req.params.id);
+      res.json({ message: 'Đã xóa game thành công' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi máy chủ khi xóa game' });
+    }
   });
 
   // User accounts management (admin-only)
-  app.get('/api/admin/users', adminMiddleware, (req, res) => {
-    const users = db.getUsers().map(({ id, username, email, role, avatarUrl }) => ({ id, username, email, role, avatarUrl }));
-    res.json(users);
+  app.get('/api/admin/users', adminMiddleware, async (req, res) => {
+    try {
+      const users = (await db.getUsers()).map(({ id, username, email, role, avatarUrl }) => ({ id, username, email, role, avatarUrl }));
+      res.json(users);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải danh sách người dùng' });
+    }
   });
 
-  app.put('/api/admin/users/:id', adminMiddleware, (req, res) => {
-    const { role } = req.body;
-    if (!role || !['user', 'admin', 'dichgia'].includes(role)) {
-      return res.status(400).json({ error: 'Vai trò người dùng không hợp lệ' });
-    }
+  app.put('/api/admin/users/:id', adminMiddleware, async (req, res) => {
+    try {
+      const { role } = req.body;
+      if (!role || !['user', 'admin', 'dichgia'].includes(role)) {
+        return res.status(400).json({ error: 'Vai trò người dùng không hợp lệ' });
+      }
 
-    const { id } = req.params;
-    if (id === 'admin-therum') {
-      return res.status(400).json({ error: 'Không thể thay đổi phân quyền của tài khoản Admin gốc!' });
-    }
+      const { id } = req.params;
+      if (id === 'admin-therum') {
+        return res.status(400).json({ error: 'Không thể thay đổi phân quyền của tài khoản Admin gốc!' });
+      }
 
-    const users = db.getUsers();
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
-    }
+      const user = await db.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
+      }
 
-    users[userIndex].role = role as any;
-    db.saveUsers(users);
-    res.json({ message: 'Cập nhật phân quyền người dùng thành công!', user: { id, role } });
+      await db.updateUserRole(id, role);
+      res.json({ message: 'Cập nhật phân quyền người dùng thành công!', user: { id, role } });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi cập nhật phân quyền' });
+    }
   });
 
-  app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
-    const { id } = req.params;
-    if (id === 'admin-therum') {
-      return res.status(400).json({ error: 'Không thể xóa Admin hệ thống mặc định!' });
-    }
+  app.delete('/api/admin/users/:id', adminMiddleware, async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (id === 'admin-therum') {
+        return res.status(400).json({ error: 'Không thể xóa Admin hệ thống mặc định!' });
+      }
 
-    const users = db.getUsers();
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({ error: 'Không tìm thấy người dùng cần xóa!' });
-    }
+      const user = await db.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng cần xóa!' });
+      }
 
-    users.splice(userIndex, 1);
-    db.saveUsers(users);
-    res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
+      await db.deleteUser(id);
+      res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi xóa người dùng' });
+    }
   });
 
   const isProd = process.env.NODE_ENV === 'production' || 
