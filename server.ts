@@ -1,12 +1,7 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { db } from './src/db/dbService';
 import { Game, User, BrokenReport, GameRequest } from './src/types';
-
-// ES Modules / CommonJS compatibility helpers
-const _filename = typeof __filename !== 'undefined' ? __filename : fileURLToPath(import.meta['url']);
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(_filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -696,7 +691,10 @@ const PORT = process.env.PORT || 3000;
     res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
   });
 
-  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1' || _filename.endsWith('.cjs') || _dirname.includes('dist');
+  const isProd = process.env.NODE_ENV === 'production' || 
+                 process.env.VERCEL === '1' || 
+                 (typeof __filename !== 'undefined' && __filename.endsWith('.cjs')) || 
+                 (typeof __dirname !== 'undefined' && __dirname.includes('dist'));
 
   // Vite development server setup
   if (!isProd) {
@@ -717,7 +715,7 @@ const PORT = process.env.PORT || 3000;
       });
     });
   } else {
-    const distPath = _dirname;
+    const distPath = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
