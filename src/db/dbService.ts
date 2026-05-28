@@ -2,17 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { Game, User, Bookmark, BrokenReport, Tag, GameRequest } from '../types';
 
-const DB_DIR = path.resolve('./data');
+const DB_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
+
+let defaultData: any = null;
+let memoryDb: any = null;
 
 // Helper to secure directory existence
 const ensureDbExists = () => {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(DB_FILE)) {
-    const initialData = {
+  const initialData = {
       users: [
         {
           id: 'admin-therum',
@@ -298,18 +296,37 @@ Bản Việt hóa cực kỳ tinh quái, dí dỏm bằng tiếng Việt sinh đ
       ]
     };
 
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-  }
+    defaultData = initialData;
+
+    try {
+      if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      }
+
+      if (!fs.existsSync(DB_FILE)) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+      }
+    } catch (err) {
+      console.warn("Warning: Failed to ensure database directory or file exists:", err);
+    }
 };
 
 export const db = {
   getData: () => {
     ensureDbExists();
-    const content = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(content);
+    try {
+      if (fs.existsSync(DB_FILE)) {
+        const content = fs.readFileSync(DB_FILE, 'utf-8');
+        return JSON.parse(content);
+      }
+    } catch (err) {
+      console.warn("Warning: Failed to read database from disk, using memory fallback:", err);
+    }
+    return memoryDb || defaultData;
   },
 
   saveData: (data: any) => {
+    memoryDb = data;
     ensureDbExists();
     try {
       fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
