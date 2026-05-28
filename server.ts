@@ -696,11 +696,12 @@ const PORT = process.env.PORT || 3000;
     res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
   });
 
-  const isProd = process.env.NODE_ENV === 'production' || _filename.endsWith('.cjs') || _dirname.includes('dist');
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1' || _filename.endsWith('.cjs') || _dirname.includes('dist');
 
   // Vite development server setup
   if (!isProd) {
-    import('vite').then(({ createServer: createViteServer }) => {
+    const viteModuleName = 'vite';
+    import(viteModuleName).then(({ createServer: createViteServer }) => {
       createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',

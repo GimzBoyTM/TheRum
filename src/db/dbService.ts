@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { Game, User, Bookmark, BrokenReport, Tag, GameRequest } from '../types';
 
-const DB_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DB_DIR, 'db.json');
+const DB_FILE = typeof __dirname !== 'undefined'
+  ? path.join(__dirname, '../../data/db.json')
+  : path.join(path.dirname(fileURLToPath(import.meta.url)), '../../data/db.json');
+const DB_DIR = path.dirname(DB_FILE);
 
 let defaultData: any = null;
 let memoryDb: any = null;
