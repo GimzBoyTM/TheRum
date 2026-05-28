@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Game, User, Bookmark, BrokenReport, Tag, GameRequest } from '../types';
+import { Game, User, Bookmark, BrokenReport, Tag, GameRequest } from '../types.js';
 
 const DB_DIR = process.env.VERCEL === '1'
   ? path.join(process.cwd(), 'data')
