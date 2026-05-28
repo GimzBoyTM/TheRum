@@ -1,12 +1,17 @@
 import express from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { db } from './src/db/dbService';
 import { Game, User, BrokenReport, GameRequest } from './src/types';
+
+// ES Modules / CommonJS compatibility helpers
+const _filename = typeof __filename !== 'undefined' ? __filename : fileURLToPath(import.meta['url']);
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(_filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
   // Simple token helper (Base64 wrapper for session payload)
   const generateToken = (user: User) => {
@@ -510,6 +515,30 @@ const PORT = process.env.PORT || 3000;
     res.json({ message: 'Đã giải quyết báo lỗi liên kết thành công' });
   });
 
+  app.get('/api/admin/backup', adminMiddleware, (req, res) => {
+    try {
+      const data = db.getData();
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=therum-db-backup.json');
+      res.send(JSON.stringify(data, null, 2));
+    } catch (err: any) {
+      res.status(500).json({ error: 'Không thể tạo bản sao lưu dữ liệu' });
+    }
+  });
+
+  app.post('/api/admin/restore', adminMiddleware, (req, res) => {
+    try {
+      const newData = req.body;
+      if (!newData || !Array.isArray(newData.users) || !Array.isArray(newData.games) || !Array.isArray(newData.tags)) {
+        return res.status(400).json({ error: 'Cấu trúc dữ liệu phục hồi không hợp lệ! Bản sao lưu cần chứa danh sách users, games và tags.' });
+      }
+      db.saveData(newData);
+      res.json({ message: 'Khôi phục dữ liệu ứng dụng thành công!' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Không thể khôi phục dữ liệu: ' + err.message });
+    }
+  });
+
   // Create Game
   app.post('/api/games', adminOrDichGiaMiddleware, (req: any, res) => {
     const { title, shortDescription, description, coverUrl, bannerUrl, developer, publisher, status, engine, platforms, ageRating, tags, downloadLinks, screenshots } = req.body;
@@ -667,7 +696,7 @@ const PORT = process.env.PORT || 3000;
     res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
   });
 
-  const isProd = process.env.NODE_ENV === 'production' || __filename.endsWith('.cjs') || __dirname.includes('dist');
+  const isProd = process.env.NODE_ENV === 'production' || _filename.endsWith('.cjs') || _dirname.includes('dist');
 
   // Vite development server setup
   if (!isProd) {
@@ -687,7 +716,7 @@ const PORT = process.env.PORT || 3000;
       });
     });
   } else {
-    const distPath = __dirname;
+    const distPath = _dirname;
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit, Trash2, CheckCircle2, AlertOctagon, LayoutDashboard, 
-  Settings, Key, Trash, Link, Globe, AlertCircle, Sparkles, FolderPlus, Compass
+  Settings, Key, Trash, Link, Globe, AlertCircle, Sparkles, FolderPlus, Compass,
+  Database, Download, Upload
 } from 'lucide-react';
 import { Game, BrokenReport, User, GameRequest } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
@@ -572,6 +573,17 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
             >
               <Key className="w-4 h-4 text-amber-500" />
               <span>Quản lý Tài khoản (Phân quyền)</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('database')}
+              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeSubTab === 'database'
+                  ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
+                  : 'text-zinc-500 hover:text-white'
+              }`}
+            >
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Sao lưu & Khôi phục</span>
             </button>
           </>
         )}
@@ -1798,6 +1810,157 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* SUB-TAB CONTENTS: Database Backup & Restore */}
+      {activeSubTab === 'database' && currentUser?.role === 'admin' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-400 text-xs shadow-md">
+            <Database className="w-5 h-5 shrink-0 animate-pulse" />
+            <span>
+              <strong>Quản lý dữ liệu hệ thống (Sao lưu & Khôi phục):</strong> Bạn có thể xuất toàn bộ dữ liệu ứng dụng hiện tại (bao gồm tài khoản, tựa game, thể loại, yêu cầu dịch,...) thành file JSON hoặc tải lên một file dữ liệu JSON hợp lệ để ghi đè/khôi phục hệ thống.
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Export database Card */}
+            <div className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm p-6 rounded-2xl shadow-md space-y-4 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Download className="w-5 h-5" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider font-sans">Xuất dữ liệu ứng dụng</h3>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  Tải về toàn bộ cơ sở dữ liệu `db.json` hiện tại của TheRum dưới dạng file `.json`. Bạn có thể lưu trữ file này để làm bản sao lưu dự phòng.
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setFormError('');
+                    setFormSuccess('');
+                    try {
+                      const token = localStorage.getItem('therum_token');
+                      const res = await fetch('/api/admin/backup', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      });
+                      if (res.ok) {
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `therum-db-backup-${new Date().toISOString().split('T')[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        setFormSuccess('Tải file sao lưu dữ liệu thành công!');
+                      } else {
+                        const err = await res.json();
+                        setFormError(err.error || 'Lỗi khi tải file sao lưu');
+                      }
+                    } catch {
+                      setFormError('Lỗi kết nối máy chủ không phản hồi');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-450 text-slate-955 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-500/15 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Download className="w-4 h-4 text-slate-955" />
+                  <span>Tải Xuống Bản Sao Lưu (.json)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Import database Card */}
+            <div className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm p-6 rounded-2xl shadow-md space-y-4 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-amber-500">
+                  <Upload className="w-5 h-5" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider font-sans">Khôi phục / Nạp dữ liệu</h3>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  Chọn file backup `.json` hợp lệ từ máy tính của bạn để khôi phục cơ sở dữ liệu. 
+                  <span className="text-red-400 font-bold block mt-1">⚠️ Cảnh báo: Thao tác này sẽ ghi đè và thay thế toàn bộ dữ liệu hiện tại trên hệ thống!</span>
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <input
+                  type="file"
+                  id="db-upload-input"
+                  accept=".json"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setFormError('');
+                    setFormSuccess('');
+                    setSubmittingForm(true);
+
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                      try {
+                        const jsonText = event.target?.result as string;
+                        const parsedData = JSON.parse(jsonText);
+
+                        const token = localStorage.getItem('therum_token');
+                        const res = await fetch('/api/admin/restore', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify(parsedData)
+                        });
+
+                        const resData = await res.json();
+                        if (res.ok) {
+                          setFormSuccess(resData.message || 'Khôi phục dữ liệu thành công!');
+                          onRefreshedGames();
+                          fetchAdminData();
+                        } else {
+                          setFormError(resData.error || 'Lỗi khi phục hồi dữ liệu');
+                        }
+                      } catch (err: any) {
+                        setFormError('Lỗi đọc file JSON hoặc định dạng file không hợp lệ: ' + err.message);
+                      } finally {
+                        setSubmittingForm(false);
+                        e.target.value = '';
+                      }
+                    };
+                    reader.readAsText(file);
+                  }}
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('db-upload-input')?.click();
+                  }}
+                  disabled={submittingForm}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-450 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-amber-500/15 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{submittingForm ? 'Đang Nạp dữ liệu...' : 'Chọn File & Khôi Phục Dữ Liệu'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {formError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400">
+              {formError}
+            </div>
+          )}
+          {formSuccess && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400">
+              {formSuccess}
+            </div>
+          )}
         </div>
       )}
 
