@@ -293,7 +293,7 @@ export default function App() {
 
   return (
     <div id="therum-app" className="min-h-screen bg-[#09090b] text-[#fafafa] flex flex-col font-sans transition-all selection:bg-emerald-500/20 selection:text-emerald-400 relative overflow-hidden">
-      
+
       {/* Background Mesh Decor */}
       <div className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/20 blur-[120px] rounded-full"></div>
@@ -301,7 +301,7 @@ export default function App() {
       </div>
 
       {/* Header bar and Auth triggers */}
-      <Header 
+      <Header
         user={user}
         onNavigate={handleNavigate}
         currentRoute={currentRoute}
@@ -317,10 +317,10 @@ export default function App() {
       {/* Body content wraps */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 flex flex-col">
         <AnimatePresence mode="wait">
-          
+
           {/* 1. Trang Chủ / Khám Phá: Sidebar list */}
           {currentRoute === '/' && (
-            <motion.div 
+            <motion.div
               key="discover"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -328,9 +328,9 @@ export default function App() {
               transition={{ duration: 0.2 }}
               className="flex flex-col lg:flex-row gap-8"
             >
-              
+
               {/* Left filter side */}
-              <SidebarFilter 
+              <SidebarFilter
                 selectedTags={selectedTags}
                 onToggleTag={handleToggleTag}
                 selectedEngine={selectedEngine}
@@ -347,7 +347,7 @@ export default function App() {
 
               {/* Right games list content area */}
               <div className="flex-1 space-y-6">
-                
+
                 {/* Visual Novel Discover Intro Banner */}
                 <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-md p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                   {/* Banner backdrop subtle lights */}
@@ -355,14 +355,14 @@ export default function App() {
                   <div className="space-y-2 text-center md:text-left relative z-10">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>TheRum Exclusive Việt Hóa</span>
+                      <span>TheRum Việt Hóa</span>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Cổng Chia Sẻ Visual Novel Tuyệt Phẩm</h2>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Cộng đồng chia sẻ game lọ Việt Nam</h2>
                     <p className="text-xs sm:text-sm text-zinc-400 font-medium max-w-lg leading-relaxed">
-                      Kho tàng game nhập vai cốt truyện sâu, tiểu thuyết hình ảnh lãng mạn lôi cuốn được biên dịch hoàn chỉnh sang tiếng Việt thuần khiết.
+                      Kho tàng game lọ cốt truyện sâu, tiểu thuyết hình ảnh lãng mạn lôi cuốn được biên dịch hoàn chỉnh sang tiếng Việt thuần khiết (hoặc không).
                     </p>
                   </div>
-                  <div className="flex flex-col items-stretch gap-2.5 shrink-0 relative z-10 w-full sm:w-[160px]">
+                  <div className="flex flex-col items-stretch gap-2.5 shrink-0 relative z-10 w-full sm:w-[200px]">
                     <div className="flex shrink-0 gap-3 border border-white/5 bg-zinc-900/80 p-1.5 rounded-2xl sm:p-2 backdrop-blur-sm shadow-lg w-full justify-around">
                       <div className="text-center px-3.5 border-r border-white/5 flex-1">
                         <strong className="text-lg text-emerald-400 font-mono font-bold">100%</strong>
@@ -373,7 +373,7 @@ export default function App() {
                         <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-bold">Không Ads</p>
                       </div>
                     </div>
-                    
+
                     <button
                       type="button"
                       id="donate-btn"
@@ -409,9 +409,9 @@ export default function App() {
                         {isSortOpen && (
                           <>
                             {/* Backdrop shield for click outside */}
-                            <div 
-                              className="fixed inset-0 z-40" 
-                              onClick={() => setIsSortOpen(false)} 
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setIsSortOpen(false)}
                             />
                             <motion.div
                               initial={{ opacity: 0, scale: 0.95, y: -5 }}
@@ -430,11 +430,10 @@ export default function App() {
                                       setPage(1);
                                       setIsSortOpen(false);
                                     }}
-                                    className={`w-full text-left px-3.5 py-1.5 text-xs font-medium font-sans flex items-center justify-between transition-all cursor-pointer ${
-                                      isSelected 
-                                        ? 'bg-emerald-500/10 text-emerald-400 font-bold border-l-2 border-emerald-500' 
-                                        : 'text-zinc-400 hover:bg-zinc-900 hover:text-white border-l-2 border-transparent'
-                                    }`}
+                                    className={`w-full text-left px-3.5 py-1.5 text-xs font-medium font-sans flex items-center justify-between transition-all cursor-pointer ${isSelected
+                                      ? 'bg-emerald-500/10 text-emerald-400 font-bold border-l-2 border-emerald-500'
+                                      : 'text-zinc-400 hover:bg-zinc-900 hover:text-white border-l-2 border-transparent'
+                                      }`}
                                   >
                                     <span>{opt.label}</span>
                                     {isSelected && (
@@ -474,10 +473,10 @@ export default function App() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {games.map(game => (
-                      <GameCard 
-                        key={game.id} 
-                        game={game} 
-                        onSelect={(slug) => handleNavigate(`/game/${slug}`)} 
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        onSelect={(slug) => handleNavigate(`/game/${slug}`)}
                       />
                     ))}
                   </div>
@@ -494,7 +493,7 @@ export default function App() {
                       <ChevronLeft className="w-4 h-4" />
                       <span>Trước</span>
                     </button>
-                    
+
                     <span className="text-xs font-mono font-black text-zinc-400">
                       Trang {pagination.currentPage} / {pagination.totalPages}
                     </span>
@@ -517,7 +516,7 @@ export default function App() {
 
           {/* 2. Trang Chi Tiết: GameDetail views */}
           {currentRoute === '/game' && (
-            <motion.div 
+            <motion.div
               key="game-detail"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -530,7 +529,7 @@ export default function App() {
                   <p className="text-xs text-slate-500 font-mono">Đang đọc chi tiết hồ sơ tệp game...</p>
                 </div>
               ) : activeGame ? (
-                <GameDetail 
+                <GameDetail
                   game={activeGame}
                   user={user}
                   onBack={() => handleNavigate('/')}
@@ -551,7 +550,7 @@ export default function App() {
 
           {/* 3. Trang Quản Trị: Admin space */}
           {currentRoute === '/admin' && (
-            <motion.div 
+            <motion.div
               key="admin"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -559,7 +558,7 @@ export default function App() {
               transition={{ duration: 0.2 }}
             >
               {user?.role === 'admin' || user?.role === 'dichgia' ? (
-                <AdminDashboard 
+                <AdminDashboard
                   currentUser={user}
                   onRefreshedGames={() => { fetchGames(); fetchConfig(); }}
                   gamesList={games}
@@ -573,8 +572,8 @@ export default function App() {
                     Trang này có tính bảo mật cao, chỉ dành riêng cho biên dịch viên có thẩm quyền Admin của thương hiệu TheRum để đăng tải game.
                   </p>
                   {!user && (
-                    <button 
-                      onClick={() => setIsAuthOpen(true)} 
+                    <button
+                      onClick={() => setIsAuthOpen(true)}
                       className="mt-4 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer shadow-md shadow-emerald-500/15"
                     >
                       Đăng Nhập Admin
@@ -587,7 +586,7 @@ export default function App() {
 
           {/* 4. Trang Bookmarks / Thư viện đã lưu */}
           {currentRoute === '/bookmarks' && (
-            <motion.div 
+            <motion.div
               key="bookmarks"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -614,10 +613,10 @@ export default function App() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {games.filter(g => bookmarkedIds.includes(g.id)).map(game => (
-                    <GameCard 
-                      key={game.id} 
-                      game={game} 
-                      onSelect={(slug) => handleNavigate(`/game/${slug}`)} 
+                    <GameCard
+                      key={game.id}
+                      game={game}
+                      onSelect={(slug) => handleNavigate(`/game/${slug}`)}
                     />
                   ))}
                 </div>
@@ -634,7 +633,7 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
             >
-              <GameRequests 
+              <GameRequests
                 user={user}
                 onTriggerLogin={() => setIsAuthOpen(true)}
               />
@@ -648,27 +647,27 @@ export default function App() {
       <footer className="w-full border-t border-white/5 bg-zinc-950/40 py-8 text-center text-xs text-zinc-500 relative z-10 shrink-0 font-sans mt-12">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
           <p className="text-zinc-400 font-semibold text-xs font-sans">
-            Thương hiệu Visual Novel Việt ngữ <span className="text-emerald-400">TheRum</span> — Đồng hành cùng đam mê.
+            Cộng đồng game lọ Việt Nam <span className="text-emerald-400">TheRum</span> — Đồng hành cùng đam mê.
           </p>
           <p className="max-w-md mx-auto leading-relaxed text-[11px] text-zinc-600">
-            Mục tiêu cung cấp các bản dịch chất lượng cao, an toàn sạch sẽ, hoàn hảo vì niềm vui thưởng thức game nguyên bản của gamer Việt.
+            Mục tiêu cung cấp các bản dịch chất lượng cao, an toàn sạch sẽ, hoàn hảo vì niềm vui thưởng thức game nguyên bản của gamer Việt. (Hoặc không)
           </p>
           <div className="w-full h-px bg-white/5 my-3" />
           <p className="font-mono text-[10px] text-zinc-700">
-            &copy; {new Date().getFullYear()} TheRum. Bản quyền tệp game thuộc về nhà phát hành gốc tương ứng.
+            &copy; {new Date().getFullYear()} TheRum. Bản quyền game thuộc về nhà phát hành gốc tương ứng.
           </p>
         </div>
       </footer>
 
       {/* Global Auth Modal portal */}
-      <AuthModal 
+      <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleLoginSuccess}
       />
 
       {/* Global Donate Modal portal */}
-      <DonateModal 
+      <DonateModal
         isOpen={isDonateOpen}
         onClose={() => setIsDonateOpen(false)}
       />

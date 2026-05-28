@@ -19,7 +19,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
     ? gamesList
     : gamesList.filter(game => game.uploaderId === currentUser?.id);
 
-  const [activeSubTab, setActiveSubTab] = useState<'stats' | 'add' | 'edit' | 'reports' | 'config' | 'users'>('stats');
+  const [activeSubTab, setActiveSubTab] = useState<'stats' | 'add' | 'edit' | 'reports' | 'config' | 'users' | 'database'>('stats');
   const [reports, setReports] = useState<BrokenReport[]>([]);
   const [requestsList, setRequestsList] = useState<GameRequest[]>([]);
   const [stats, setStats] = useState({ totalGames: 0, totalUsers: 0, pendingReports: 0, pendingRequests: 0, totalDownloads: 0 });

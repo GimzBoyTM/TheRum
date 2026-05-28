@@ -20,5 +20,17 @@ export default defineConfig(() => {
         ignored: ['**/data/**', '**/db.json']
       },
     },
+    build: {
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
   };
 });

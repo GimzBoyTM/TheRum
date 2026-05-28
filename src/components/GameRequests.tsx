@@ -241,7 +241,7 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8" id="game-requests-section">
-      
+
       {/* Visual Header Banner */}
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 rounded-full text-xs font-semibold tracking-wider uppercase">
@@ -249,10 +249,10 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
           <span>Yêu cầu dự án mới</span>
         </div>
         <h2 className="text-3xl font-black text-white tracking-tight sm:text-4xl">
-          Đề Xuất & Bình Chọn Visual Novel
+          Đề Xuất & Bình Chọn Game Lọ
         </h2>
         <p className="text-zinc-400 max-w-lg mx-auto text-sm leading-relaxed">
-          TheRum sẽ thu nhận danh sách các tựa game được cộng đồng đề cử nhiều nhất và ưu tiên thực hiện Việt hóa dựa trên số lượt bình chọn.
+          Cộng đồng TheRum sẽ tiếp nhận danh sách các tựa game được đề cử nhiều nhất và ưu tiên thực hiện Việt hóa dựa trên số lượt bình chọn. (Hoặc không).
         </p>
       </div>
 
@@ -283,11 +283,10 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
               setIsFormOpen(!isFormOpen);
             }
           }}
-          className={`flex items-center gap-1.5 px-4 py-2 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer ${
-            activeUserRequest
+          className={`flex items-center gap-1.5 px-4 py-2 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer ${activeUserRequest
               ? 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed shadow-none'
               : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/15'
-          }`}
+            }`}
         >
           <Plus className="w-4 h-4 text-black stroke-[3]" />
           <span>Gửi đề xuất mới</span>
@@ -303,7 +302,7 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <form 
+            <form
               onSubmit={handleSubmit}
               className="p-6 bg-zinc-900/40 backdrop-blur-sm border border-white/5 rounded-2xl space-y-4 shadow-xl"
             >
@@ -360,11 +359,10 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
                         key={plat}
                         type="button"
                         onClick={() => handlePlatformToggle(plat)}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer border flex items-center gap-1.5 ${
-                          isSelected
+                        className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer border flex items-center gap-1.5 ${isSelected
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-extrabold'
                             : 'bg-zinc-950/25 text-zinc-450 border-white/5 hover:text-zinc-200'
-                        }`}
+                          }`}
                       >
                         {plat === 'Windows' || plat === 'macOS' ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
                         <span>{plat}</span>
@@ -493,7 +491,7 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
 
                 {/* Right side: Interactivity upvotes & Admin controls */}
                 <div className="flex items-center gap-3 self-end md:self-center shrink-0">
-                  
+
                   {/* Status Badge */}
                   <div className="relative">
                     {user?.role === 'admin' ? (
@@ -519,11 +517,10 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
                   <button
                     type="button"
                     onClick={() => handleVote(req.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${
-                      hasVoted
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${hasVoted
                         ? 'bg-emerald-500 text-black border-emerald-500 shadow-md shadow-emerald-500/10'
                         : 'bg-zinc-950/40 text-zinc-400 hover:text-white border-white/5 hover:border-white/10'
-                    }`}
+                      }`}
                   >
                     <ThumbsUp className={`w-3.5 h-3.5 ${hasVoted ? 'fill-black text-black' : 'text-zinc-500'}`} />
                     <span className="font-mono text-xs">{upvotesCount}</span>
