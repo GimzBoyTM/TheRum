@@ -5,6 +5,7 @@ import GameCard from './components/GameCard';
 import GameDetail from './components/GameDetail';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import GameRequests from './components/GameRequests';
 import DonateModal from './components/DonateModal';
 import AgeVerification from './components/AgeVerification';
@@ -47,6 +48,7 @@ export default function App() {
   // Authentication states
   const [user, setUser] = useState<User | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Filter and games data states
   const [games, setGames] = useState<Game[]>([]);
@@ -307,6 +309,7 @@ export default function App() {
         currentRoute={currentRoute}
         onLogout={handleLogout}
         onTriggerLogin={() => setIsAuthOpen(true)}
+        onChangePassword={() => setIsChangePasswordOpen(true)}
         searchTerm={search}
         onSearchChange={(val) => {
           setSearch(val);
@@ -664,6 +667,12 @@ export default function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleLoginSuccess}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
       />
 
       {/* Global Donate Modal portal */}

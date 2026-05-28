@@ -223,6 +223,10 @@ export const db = {
     await sql`DELETE FROM users WHERE id = ${id}`;
   },
 
+  updateUserPassword: async (id: string, newPassword: string) => {
+    await sql`UPDATE users SET password = ${newPassword} WHERE id = ${id}`;
+  },
+
   getUserById: async (id: string): Promise<User | null> => {
     const rows = await sql`SELECT * FROM users WHERE id = ${id}`;
     return rows.length > 0 ? rowToUser(rows[0]) : null;

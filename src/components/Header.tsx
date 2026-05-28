@@ -1,4 +1,4 @@
-import { Search, ShieldAlert, LogOut, LogIn, Compass, Layers, Sparkles, User as UserIcon } from 'lucide-react';
+import { Search, ShieldAlert, LogOut, LogIn, Compass, Layers, Sparkles, User as UserIcon, KeyRound } from 'lucide-react';
 import { User } from '../types';
 import iconUrl from '../../assets/icon.png';
 
@@ -8,6 +8,7 @@ interface HeaderProps {
   currentRoute: string;
   onLogout: () => void;
   onTriggerLogin: () => void;
+  onChangePassword: () => void;
   searchTerm: string;
   onSearchChange: (val: string) => void;
 }
@@ -18,6 +19,7 @@ export default function Header({
   currentRoute, 
   onLogout, 
   onTriggerLogin,
+  onChangePassword,
   searchTerm,
   onSearchChange
 }: HeaderProps) {
@@ -114,6 +116,13 @@ export default function Header({
                   <p className="text-[10px] text-zinc-500 capitalize font-medium">{user.role}</p>
                 </div>
               </div>
+              <button
+                onClick={onChangePassword}
+                title="Đổi mật khẩu"
+                className="p-1.5 text-zinc-500 hover:text-amber-400 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/10 rounded-lg transition-all cursor-pointer"
+              >
+                <KeyRound className="w-4 h-4" />
+              </button>
               <button
                 onClick={onLogout}
                 title="Đăng xuất"

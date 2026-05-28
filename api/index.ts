@@ -155,6 +155,41 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
     }
   });
 
+  // Change Password
+  app.put('/api/auth/change-password', authMiddleware, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword, captchaVerified } = req.body;
+
+      if (!captchaVerified) {
+        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      }
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới' });
+      }
+      if (newPassword.length < 4) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 4 ký tự' });
+      }
+      if (currentPassword === newPassword) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải khác mật khẩu hiện tại' });
+      }
+
+      // Verify current password
+      const user = await db.getUserById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+      }
+      if (user.password !== currentPassword) {
+        return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng' });
+      }
+
+      await db.updateUserPassword(req.user.id, newPassword);
+      res.json({ message: 'Đổi mật khẩu thành công!' });
+    } catch (err: any) {
+      console.error('Change password error:', err);
+      res.status(500).json({ error: 'Lỗi máy chủ khi đổi mật khẩu' });
+    }
+  });
+
   // 2. Games Catalog & Filters
   app.get('/api/games', async (req, res) => {
     try {
