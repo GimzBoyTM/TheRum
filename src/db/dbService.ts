@@ -2,9 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { Game, User, Bookmark, BrokenReport, Tag, GameRequest } from '../types';
 
-const DB_DIR = typeof __dirname !== 'undefined'
-  ? path.join(__dirname, '../../data')
-  : path.join(process.cwd(), 'data');
+const DB_DIR = process.env.VERCEL === '1'
+  ? path.join(process.cwd(), 'data')
+  : (typeof __dirname !== 'undefined'
+      ? (__dirname.includes('dist') ? path.join(__dirname, '../data') : path.join(__dirname, '../../data'))
+      : path.join(process.cwd(), 'data'));
 const DB_FILE = path.join(DB_DIR, 'db.json');
 
 let defaultData: any = null;

@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
-import { db } from './src/db/dbService';
-import { Game, User, BrokenReport, GameRequest } from './src/types';
+import { db } from '../src/db/dbService';
+import { Game, User, BrokenReport, GameRequest } from '../src/types';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
