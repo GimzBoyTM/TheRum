@@ -258,8 +258,26 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       const totalPages = Math.ceil(totalCount / limit);
       const paginatedGames = filteredGames.slice((activePage - 1) * limit, activePage * limit);
 
+      // Check authentication to sanitize download links
+      const authHeader = req.headers.authorization;
+      let authenticated = false;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const userPayload = verifyToken(token);
+        if (userPayload) {
+          authenticated = true;
+        }
+      }
+
+      const sanitizedGames = paginatedGames.map(g => {
+        if (!authenticated) {
+          return { ...g, downloadLinks: [] };
+        }
+        return g;
+      });
+
       res.json({
-        games: paginatedGames,
+        games: sanitizedGames,
         pagination: {
           totalCount,
           totalPages,
@@ -311,7 +329,23 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       await db.incrementViewCount(game.id);
       game.viewsCount += 1;
 
-      res.json(game);
+      // Check authentication to sanitize download links
+      const authHeader = req.headers.authorization;
+      let authenticated = false;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const userPayload = verifyToken(token);
+        if (userPayload) {
+          authenticated = true;
+        }
+      }
+
+      const gameResponse = { ...game };
+      if (!authenticated) {
+        gameResponse.downloadLinks = [];
+      }
+
+      res.json(gameResponse);
     } catch (err: any) {
       console.error('GET /api/games/:slug error:', err);
       res.status(500).json({ error: 'Lỗi máy chủ' });

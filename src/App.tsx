@@ -177,9 +177,13 @@ export default function App() {
       if (selectedPlatform) params.append('platform', selectedPlatform);
       if (selectedStatus) params.append('status', selectedStatus);
       if (sortBy) params.append('sortBy', sortBy);
-      params.append('page', String(page));
+      const headers: HeadersInit = {};
+      const token = localStorage.getItem('therum_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-      const res = await fetch(`/api/games?${params.toString()}`);
+      const res = await fetch(`/api/games?${params.toString()}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setGames(data.games);
@@ -205,7 +209,12 @@ export default function App() {
       const fetchGameDetail = async () => {
         setLoadingActiveGame(true);
         try {
-          const res = await fetch(`/api/games/${activeSlug}`);
+          const headers: HeadersInit = {};
+          const token = localStorage.getItem('therum_token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          const res = await fetch(`/api/games/${activeSlug}`, { headers });
           if (res.ok) {
             const gameDetails = await res.json();
             setActiveGame(gameDetails);
@@ -222,7 +231,7 @@ export default function App() {
     } else {
       setActiveGame(null);
     }
-  }, [currentRoute, activeSlug]);
+  }, [currentRoute, activeSlug, user]);
 
   const handleNavigate = (route: string) => {
     if (route === '/') {

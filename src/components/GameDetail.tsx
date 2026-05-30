@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   ArrowLeft, Download, Bookmark, Award, AlertTriangle, Monitor, 
-  Smartphone, Globe, Calendar, Eye, Heart, Key, Check, ChevronRight, MessageSquare 
+  Smartphone, Globe, Calendar, Eye, Heart, Key, Check, ChevronRight, MessageSquare,
+  Lock
 } from 'lucide-react';
 import { Game, User } from '../types';
 
@@ -335,43 +336,63 @@ export default function GameDetail({
                   </p>
                 </div>
 
-                <div className="space-y-3.5">
-                  {game.downloadLinks.length === 0 ? (
-                    <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
-                      <p className="text-zinc-500 text-sm">Hệ thống đang cập nhật liên kết tải cho game này.</p>
+                {!user ? (
+                  <div className="flex flex-col items-center justify-center p-8 border border-dashed border-white/10 rounded-xl bg-zinc-950/40 text-center space-y-4 py-12">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Lock className="w-6 h-6 animate-pulse" />
                     </div>
-                  ) : (
-                    game.downloadLinks.map((link, idx) => (
-                      <div 
-                        key={idx} 
-                        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 border border-white/5 hover:border-emerald-500/30 bg-zinc-900/50 hover:bg-zinc-800/80 rounded-xl transition-all"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-zinc-200 truncate">{link.label}</p>
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-white/5">
-                              Lưu trữ trực tuyến
-                            </span>
-                            {link.password && (
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/40 text-emerald-450 border border-emerald-900/30 flex items-center gap-1 leading-none">
-                                <Key className="w-3 h-3 text-emerald-450 shrink-0" />
-                                <span>Giải nén: <strong className="select-all font-bold">{link.password}</strong></span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleDownloadClick(link.url)}
-                          className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15 shrink-0"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Tải Về Ngay</span>
-                        </button>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-zinc-200">Liên kết tải yêu cầu đăng nhập</h4>
+                      <p className="text-xs text-zinc-500 max-w-sm">
+                        Vui lòng đăng ký hoặc đăng nhập tài khoản TheRum để hiển thị và truy cập liên kết tải game Visual Novel này.
+                      </p>
+                    </div>
+                    <button
+                      onClick={onTriggerLogin}
+                      className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-500/15 active:scale-95 border border-emerald-400/20"
+                    >
+                      Đăng nhập / Đăng ký
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {game.downloadLinks.length === 0 ? (
+                      <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
+                        <p className="text-zinc-500 text-sm">Hệ thống đang cập nhật liên kết tải cho game này.</p>
                       </div>
-                    ))
-                  )}
-                </div>
+                    ) : (
+                      game.downloadLinks.map((link, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 border border-white/5 hover:border-emerald-500/30 bg-zinc-900/50 hover:bg-zinc-800/80 rounded-xl transition-all"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-zinc-200 truncate">{link.label}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-white/5">
+                                Lưu trữ trực tuyến
+                              </span>
+                              {link.password && (
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/40 text-emerald-450 border border-emerald-900/30 flex items-center gap-1 leading-none">
+                                  <Key className="w-3 h-3 text-emerald-450 shrink-0" />
+                                  <span>Giải nén: <strong className="select-all font-bold">{link.password}</strong></span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleDownloadClick(link.url)}
+                            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15 shrink-0"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Tải Về Ngay</span>
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
 
                 {/* Hướng dẫn cài đặt bổ sung */}
                 <div className="p-4 border border-teal-950/20 bg-zinc-950/40 rounded-xl">
