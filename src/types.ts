@@ -2,6 +2,7 @@ export interface DownloadLink {
   label: string;
   url: string;
   password?: string;
+  isVip?: boolean;
 }
 
 export interface Changelog {
@@ -43,7 +44,7 @@ export interface User {
   username: string;
   email: string;
   password?: string; // Stored securely
-  role: 'user' | 'admin' | 'dichgia';
+  role: 'user' | 'admin' | 'dichgia' | 'vip';
   avatarUrl?: string;
 }
 
@@ -75,6 +76,8 @@ export interface GameRequest {
   id: string;
   title: string;
   originalName?: string;
+  link?: string;
+  engine?: string;
   description?: string;
   platforms: string[];
   userId: string;

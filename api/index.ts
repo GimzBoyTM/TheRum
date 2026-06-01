@@ -261,11 +261,13 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       // Check authentication to sanitize download links
       const authHeader = req.headers.authorization;
       let authenticated = false;
+      let userRole = '';
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         const userPayload = verifyToken(token);
         if (userPayload) {
           authenticated = true;
+          userRole = userPayload.role;
         }
       }
 
@@ -273,7 +275,14 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
         if (!authenticated) {
           return { ...g, downloadLinks: [] };
         }
-        return g;
+        const canViewVip = userRole === 'vip' || userRole === 'admin' || userRole === 'dichgia';
+        return {
+          ...g,
+          downloadLinks: g.downloadLinks.map(link => {
+            if (link.isVip && !canViewVip) return { ...link, url: '' };
+            return link;
+          })
+        };
       });
 
       res.json({
@@ -332,17 +341,27 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       // Check authentication to sanitize download links
       const authHeader = req.headers.authorization;
       let authenticated = false;
+      let userRole = '';
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         const userPayload = verifyToken(token);
         if (userPayload) {
           authenticated = true;
+          userRole = userPayload.role;
         }
       }
 
       const gameResponse = { ...game };
       if (!authenticated) {
         gameResponse.downloadLinks = [];
+      } else {
+        const canViewVip = userRole === 'vip' || userRole === 'admin' || userRole === 'dichgia';
+        gameResponse.downloadLinks = gameResponse.downloadLinks.map(link => {
+          if (link.isVip && !canViewVip) {
+            return { ...link, url: '' };
+          }
+          return link;
+        });
       }
 
       res.json(gameResponse);
@@ -448,7 +467,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   app.post('/api/requests', authMiddleware, async (req: any, res) => {
     try {
-      const { title, originalName, description, platforms } = req.body;
+      const { title, originalName, description, platforms, link, engine } = req.body;
       if (!title || title.trim() === '') {
         return res.status(400).json({ error: 'Vui lòng nhập tên game yêu cầu' });
       }
@@ -465,6 +484,8 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
         id: 'req-' + Date.now(),
         title: title.trim(),
         originalName: originalName?.trim() || '',
+        link: link?.trim() || '',
+        engine: engine?.trim() || '',
         description: description?.trim() || '',
         platforms: Array.isArray(platforms) && platforms.length > 0 ? platforms : ['Windows'],
         userId: req.user.id,
@@ -734,7 +755,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   app.put('/api/admin/users/:id', adminMiddleware, async (req, res) => {
     try {
       const { role } = req.body;
-      if (!role || !['user', 'admin', 'dichgia'].includes(role)) {
+      if (!role || !['user', 'admin', 'dichgia', 'vip'].includes(role)) {
         return res.status(400).json({ error: 'Vai trò người dùng không hợp lệ' });
       }
 
@@ -771,6 +792,25 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       res.json({ message: 'Xóa tài khoản người dùng khỏi hệ thống thành công!' });
     } catch (err: any) {
       res.status(500).json({ error: 'Lỗi xóa người dùng' });
+    }
+  });
+
+  app.put('/api/admin/users/:id/reset-password', adminMiddleware, async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (id === 'admin-therum') {
+        return res.status(400).json({ error: 'Không thể đổi mật khẩu của tài khoản Admin hệ thống mặc định bằng cách này!' });
+      }
+
+      const user = await db.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng này' });
+      }
+
+      await db.updateUserPassword(id, 'user123');
+      res.json({ message: 'Khôi phục mật khẩu thành công! Mật khẩu mới là: user123' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi khôi phục mật khẩu' });
     }
   });
 

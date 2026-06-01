@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { 
-  ArrowLeft, Download, Bookmark, Award, AlertTriangle, Monitor, 
+import {
+  ArrowLeft, Download, Bookmark, Award, AlertTriangle, Monitor,
   Smartphone, Globe, Calendar, Eye, Heart, Key, Check, ChevronRight, MessageSquare,
-  Lock
+  Lock, Sparkles
 } from 'lucide-react';
 import { Game, User } from '../types';
 
@@ -16,11 +16,11 @@ interface GameDetailProps {
   onTriggerLogin: () => void;
 }
 
-export default function GameDetail({ 
-  game, 
-  user, 
-  onBack, 
-  onBookmarkToggle, 
+export default function GameDetail({
+  game,
+  user,
+  onBack,
+  onBookmarkToggle,
   isBookmarked: initialBookmarked,
   onTriggerLogin
 }: GameDetailProps) {
@@ -111,9 +111,9 @@ export default function GameDetail({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Back button */}
-      <button 
+      <button
         id="back-list-btn"
         onClick={onBack}
         className="flex items-center gap-2 text-zinc-400 hover:text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
@@ -124,12 +124,12 @@ export default function GameDetail({
 
       {/* Banner + Cover Header Block */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-md shadow-xl">
-        
+
         {/* Large soft blurry background banner */}
         <div className="h-64 sm:h-72 w-full relative">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent z-10" />
-          <img 
-            src={game.bannerUrl} 
+          <img
+            src={game.bannerUrl}
             alt={game.title}
             className="w-full h-full object-cover select-none"
             referrerPolicy="no-referrer"
@@ -138,11 +138,11 @@ export default function GameDetail({
 
         {/* Branding Elements Layer */}
         <div className="p-6 md:p-8 relative z-20 mt-[-64px] sm:mt-[-80px] flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
-          
+
           {/* Main Cover art wrapper */}
           <div className="w-28 sm:w-36 h-40 sm:h-52 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-2xl relative bg-zinc-950 shrink-0">
-            <img 
-              src={game.coverUrl} 
+            <img
+              src={game.coverUrl}
               alt={game.title}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -187,7 +187,7 @@ export default function GameDetail({
 
           {/* Dynamic Desktop Actions Column */}
           <div className="flex sm:flex-col gap-2.5 w-full sm:w-auto shrink-0 mt-4 sm:mt-0 justify-center">
-            
+
             <button
               id="direct-download-tab-btn"
               onClick={() => {
@@ -208,11 +208,10 @@ export default function GameDetail({
             <button
               id="bookmark-game-btn"
               onClick={handleBookmark}
-              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md ${
-                isBookmarked 
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/15' 
-                  : 'bg-zinc-800/40 backdrop-blur-sm hover:bg-zinc-850 text-zinc-300 border border-white/10'
-              }`}
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md ${isBookmarked
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/15'
+                : 'bg-zinc-800/40 backdrop-blur-sm hover:bg-zinc-850 text-zinc-300 border border-white/10'
+                }`}
             >
               <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-slate-950' : ''}`} />
               <span>{isBookmarked ? 'Đã yêu thích' : 'Yêu thích (Bookmark)'}</span>
@@ -241,29 +240,27 @@ export default function GameDetail({
 
       {/* Main Content & Sidebar Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Side: Dynamic Tabs Area */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Navigation Tab Header bar */}
           <div id="game-tabs-section" className="flex border-b border-white/5 bg-zinc-900/40 backdrop-blur-sm rounded-xl p-1 gap-1">
             <button
               onClick={() => setActiveTab('desc')}
-              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'desc' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'text-zinc-550 hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${activeTab === 'desc'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'text-zinc-550 hover:text-white'
+                }`}
             >
               Giới thiệu
             </button>
             <button
               onClick={() => setActiveTab('download')}
-              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer relative ${
-                activeTab === 'download' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'text-zinc-550 hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer relative ${activeTab === 'download'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'text-zinc-550 hover:text-white'
+                }`}
             >
               <span>Tải Game</span>
               <span className="absolute -top-1 -right-1 flex h-2 w-2 select-none">
@@ -273,21 +270,19 @@ export default function GameDetail({
             </button>
             <button
               onClick={() => setActiveTab('screenshots')}
-              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'screenshots' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'text-zinc-550 hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${activeTab === 'screenshots'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'text-zinc-550 hover:text-white'
+                }`}
             >
               Thư viện
             </button>
             <button
               onClick={() => setActiveTab('changelog')}
-              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'changelog' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'text-zinc-550 hover:text-white'
-              }`}
+              className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${activeTab === 'changelog'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'text-zinc-550 hover:text-white'
+                }`}
             >
               Lịch sử dịch
             </button>
@@ -295,7 +290,7 @@ export default function GameDetail({
 
           {/* TAB CARD CONTENTS */}
           <div className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-6 shadow-sm min-h-[300px]">
-            
+
             {/* Tab: Giới thiệu (MarkDown parser or simply neat elements) */}
             {activeTab === 'desc' && (
               <div className="space-y-6 text-zinc-300 text-sm leading-relaxed font-sans">
@@ -304,19 +299,19 @@ export default function GameDetail({
                   <div className="markdown-body">
                     <ReactMarkdown
                       components={{
-                        h1: ({node, ...props}) => <h1 className="text-xl font-black text-white mt-5 mb-3 select-none" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-lg font-bold text-white mt-4 mb-2 select-none" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="text-base font-bold text-emerald-400 mt-3.5 mb-2 select-none" {...props} />,
-                        p: ({node, ...props}) => <p className="text-xs text-zinc-300 leading-normal mb-3 whitespace-pre-line" {...props} />,
-                        ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 text-zinc-300 space-y-1.5 list-outside" {...props} />,
-                        ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 text-zinc-300 space-y-1.5 list-outside" {...props} />,
-                        li: ({node, ...props}) => <li className="text-xs text-zinc-300" {...props} />,
-                        code: ({node, ...props}) => <code className="bg-zinc-950 px-1 py-0.5 rounded font-mono text-emerald-400 text-xs" {...props} />,
-                        pre: ({node, ...props}) => <pre className="bg-zinc-950 p-3 rounded-lg overflow-x-auto font-mono text-xs my-3 border border-white/5" {...props} />,
-                        strong: ({node, ...props}) => <strong className="font-extrabold text-emerald-300" {...props} />,
-                        em: ({node, ...props}) => <em className="italic text-zinc-200" {...props} />,
-                        a: ({node, ...props}) => <a className="text-emerald-450 hover:text-emerald-300 underline font-extrabold transition-all" target="_blank" rel="noreferrer" {...props} />,
-                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-emerald-500/40 pl-4 py-1 italic bg-emerald-500/5 my-3 rounded-r-lg text-zinc-400" {...props} />,
+                        h1: ({ node, ...props }) => <h1 className="text-xl font-black text-white mt-5 mb-3 select-none" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold text-white mt-4 mb-2 select-none" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-base font-bold text-emerald-400 mt-3.5 mb-2 select-none" {...props} />,
+                        p: ({ node, ...props }) => <p className="text-xs text-zinc-300 leading-normal mb-3 whitespace-pre-line" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3 text-zinc-300 space-y-1.5 list-outside" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3 text-zinc-300 space-y-1.5 list-outside" {...props} />,
+                        li: ({ node, ...props }) => <li className="text-xs text-zinc-300" {...props} />,
+                        code: ({ node, ...props }) => <code className="bg-zinc-950 px-1 py-0.5 rounded font-mono text-emerald-400 text-xs" {...props} />,
+                        pre: ({ node, ...props }) => <pre className="bg-zinc-950 p-3 rounded-lg overflow-x-auto font-mono text-xs my-3 border border-white/5" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-extrabold text-emerald-300" {...props} />,
+                        em: ({ node, ...props }) => <em className="italic text-zinc-200" {...props} />,
+                        a: ({ node, ...props }) => <a className="text-emerald-450 hover:text-emerald-300 underline font-extrabold transition-all" target="_blank" rel="noreferrer" {...props} />,
+                        blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-emerald-500/40 pl-4 py-1 italic bg-emerald-500/5 my-3 rounded-r-lg text-zinc-400" {...props} />,
                       }}
                     >
                       {game.description}
@@ -332,7 +327,7 @@ export default function GameDetail({
                 <div>
                   <h3 className="text-lg font-bold text-zinc-100 font-sans border-b border-white/5 pb-2 mb-1.5">Liên Kết Tải Bản Việt Hóa</h3>
                   <p className="text-xs text-zinc-500 font-mono">
-                    Để tri ân công sức của nhóm dịch, tất cả link tải đều cam kết an toàn, không chứa malware/virus hoặc quảng cáo rút gọn kiếm tiền gây phiền toái.
+                    Đây là công sức của nhóm dịch TheRum. Mọi liên kết tải xuống đều được kiểm tra và cam kết an toàn, không chứa virus hay mã độc. Để có kinh phí duy trì hoạt động của nhóm, một số liên kết có thể đi kèm quảng cáo. Mong các bạn thông cảm và ủng hộ. Xin cảm ơn!
                   </p>
                 </div>
 
@@ -362,12 +357,26 @@ export default function GameDetail({
                       </div>
                     ) : (
                       game.downloadLinks.map((link, idx) => (
-                        <div 
-                          key={idx} 
-                          className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 border border-white/5 hover:border-emerald-500/30 bg-zinc-900/50 hover:bg-zinc-800/80 rounded-xl transition-all"
+                        <div
+                          key={idx}
+                          className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl transition-all ${
+                            link.isVip 
+                              ? 'border border-fuchsia-500/20 bg-fuchsia-950/10 hover:border-fuchsia-500/40 hover:bg-fuchsia-950/20 shadow-[inset_0_0_20px_rgba(217,70,239,0.05)]' 
+                              : 'border border-white/5 hover:border-emerald-500/30 bg-zinc-900/50 hover:bg-zinc-800/80'
+                          }`}
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-zinc-200 truncate">{link.label}</p>
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm font-bold truncate ${link.isVip ? 'text-fuchsia-300' : 'text-zinc-200'}`}>
+                                {link.label}
+                              </p>
+                              {link.isVip && (
+                                <span className="text-[9px] font-black uppercase tracking-widest bg-fuchsia-500 text-slate-950 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm shadow-fuchsia-500/20">
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  VIP Link
+                                </span>
+                              )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-2 mt-1">
                               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-white/5">
                                 Lưu trữ trực tuyến
@@ -381,13 +390,27 @@ export default function GameDetail({
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => handleDownloadClick(link.url)}
-                            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15 shrink-0"
-                          >
-                            <Download className="w-4 h-4" />
-                            <span>Tải Về Ngay</span>
-                          </button>
+                          {link.isVip && !link.url ? (
+                            <button
+                              disabled
+                              className="px-4 py-2.5 bg-fuchsia-500/10 text-fuchsia-500 font-bold text-xs uppercase tracking-wider rounded-xl border border-fuchsia-500/20 flex items-center justify-center gap-1.5 cursor-not-allowed w-full sm:w-auto shrink-0"
+                            >
+                              <Lock className="w-4 h-4" />
+                              <span>Độc quyền VIP</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleDownloadClick(link.url)}
+                              className={`px-4 py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0 w-full sm:w-auto ${
+                                link.isVip 
+                                  ? 'bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 hover:from-fuchsia-500 hover:to-fuchsia-400 text-white shadow-fuchsia-500/20 border border-fuchsia-400/20'
+                                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/15'
+                              }`}
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Tải Về Ngay</span>
+                            </button>
+                          )}
                         </div>
                       ))
                     )}
@@ -414,7 +437,7 @@ export default function GameDetail({
             {activeTab === 'screenshots' && (
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-zinc-100 font-sans border-b border-white/5 pb-2 mb-4">Thư viện hình ảnh Việt hóa</h3>
-                
+
                 {game.screenshots.length === 0 ? (
                   <div className="text-center py-10 text-zinc-500 text-sm border border-dashed border-white/10 rounded-xl">
                     Chưa có hình ảnh nào được đăng tải trong thư viện trò chơi.
@@ -423,9 +446,9 @@ export default function GameDetail({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {game.screenshots.map((screen, idx) => (
                       <div key={idx} className="aspect-video rounded-xl overflow-hidden border border-white/5 relative group bg-zinc-950">
-                        <img 
-                          src={screen} 
-                          alt={`Screenshot ${idx + 1}`} 
+                        <img
+                          src={screen}
+                          alt={`Screenshot ${idx + 1}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           referrerPolicy="no-referrer"
                         />
@@ -440,13 +463,13 @@ export default function GameDetail({
             {activeTab === 'changelog' && (
               <div className="space-y-6">
                 <h3 className="text-lg font-bold text-zinc-100 font-sans border-b border-white/5 pb-2 mb-4">Tiến Độ & Nhật Ký Cập Nhật Việt Hóa</h3>
-                
+
                 <div className="relative border-l border-white/5 pl-5 ml-2 space-y-6">
                   {game.changelogs.map((history, idx) => (
                     <div key={idx} className="relative">
                       {/* Timeline dot circle */}
                       <span className="absolute -left-[26px] top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 border-2 border-zinc-950"></span>
-                      
+
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-black text-zinc-100 font-sans">{history.version}</span>
@@ -471,11 +494,11 @@ export default function GameDetail({
 
         {/* Right Side: Sidebar Metadata Area */}
         <div className="space-y-6">
-          
+
           {/* Metadata Card */}
           <div className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-5 space-y-4 shadow-md">
             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest font-mono">Thông Tin Cơ Bản</h3>
-            
+
             <div className="space-y-3 divide-y divide-white/5 text-xs">
               <div className="flex justify-between items-center py-2.5">
                 <span className="text-zinc-500 font-semibold font-sans">Trạng thái dịch</span>

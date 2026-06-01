@@ -76,6 +76,8 @@ function rowToGameRequest(r: any): GameRequest {
     id: r.id,
     title: r.title,
     originalName: r.original_name,
+    link: r.link,
+    engine: r.engine,
     description: r.description,
     platforms: r.platforms || [],
     userId: r.user_id,
@@ -181,8 +183,8 @@ export const db = {
     if (Array.isArray(data.gameRequests)) {
       for (const gr of data.gameRequests) {
         await sql`
-          INSERT INTO game_requests (id, title, original_name, description, platforms, user_id, username, votes, status, created_at)
-          VALUES (${gr.id}, ${gr.title}, ${gr.originalName || gr.original_name || ''},
+          INSERT INTO game_requests (id, title, original_name, link, engine, description, platforms, user_id, username, votes, status, created_at)
+          VALUES (${gr.id}, ${gr.title}, ${gr.originalName || gr.original_name || ''}, ${gr.link || ''}, ${gr.engine || ''},
             ${gr.description || ''}, ${gr.platforms || ['Windows']}, ${gr.userId || gr.user_id},
             ${gr.username}, ${gr.votes || []}, ${gr.status || 'Chờ duyệt'},
             ${gr.createdAt || gr.created_at || new Date().toISOString()})
@@ -484,8 +486,8 @@ export const db = {
     await sql`TRUNCATE game_requests`;
     for (const r of requests) {
       await sql`
-        INSERT INTO game_requests (id, title, original_name, description, platforms, user_id, username, votes, status, created_at)
-        VALUES (${r.id}, ${r.title}, ${r.originalName || ''}, ${r.description || ''},
+        INSERT INTO game_requests (id, title, original_name, link, engine, description, platforms, user_id, username, votes, status, created_at)
+        VALUES (${r.id}, ${r.title}, ${r.originalName || ''}, ${r.link || ''}, ${r.engine || ''}, ${r.description || ''},
           ${r.platforms || ['Windows']}, ${r.userId}, ${r.username}, ${r.votes || []},
           ${r.status}, ${r.createdAt || new Date().toISOString()})
       `;
@@ -494,8 +496,8 @@ export const db = {
 
   addGameRequest: async (request: GameRequest) => {
     await sql`
-      INSERT INTO game_requests (id, title, original_name, description, platforms, user_id, username, votes, status, created_at)
-      VALUES (${request.id}, ${request.title}, ${request.originalName || ''}, ${request.description || ''},
+      INSERT INTO game_requests (id, title, original_name, link, engine, description, platforms, user_id, username, votes, status, created_at)
+      VALUES (${request.id}, ${request.title}, ${request.originalName || ''}, ${request.link || ''}, ${request.engine || ''}, ${request.description || ''},
         ${request.platforms || ['Windows']}, ${request.userId}, ${request.username}, ${request.votes || []},
         ${request.status}, ${request.createdAt || new Date().toISOString()})
     `;

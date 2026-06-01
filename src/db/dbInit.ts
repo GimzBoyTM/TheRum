@@ -96,6 +96,8 @@ async function initDatabase() {
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       original_name TEXT,
+      link TEXT,
+      engine TEXT,
       description TEXT,
       platforms TEXT[] DEFAULT '{Windows}',
       user_id TEXT NOT NULL,

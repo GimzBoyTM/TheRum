@@ -30,7 +30,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   const [userActionError, setUserActionError] = useState('');
   const [userActionSuccess, setUserActionSuccess] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [editingUserRole, setEditingUserRole] = useState<'user' | 'admin' | 'dichgia'>('user');
+  const [editingUserRole, setEditingUserRole] = useState<'user' | 'admin' | 'dichgia' | 'vip'>('user');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [deletingUserName, setDeletingUserName] = useState<string>('');
 
@@ -57,7 +57,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
     }
   };
 
-  const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin' | 'dichgia') => {
+  const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin' | 'dichgia' | 'vip') => {
     setUserActionError('');
     setUserActionSuccess('');
     try {
@@ -77,6 +77,26 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
       } else {
         const err = await res.json();
         setUserActionError(err.error || 'Có lỗi xảy ra khi chỉnh sửa vai trò');
+      }
+    } catch {
+      setUserActionError('Lỗi kết nối máy chủ không phản hồi');
+    }
+  };
+
+  const handleResetUserPassword = async (userId: string) => {
+    setUserActionError('');
+    setUserActionSuccess('');
+    try {
+      const token = localStorage.getItem('therum_token');
+      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setUserActionSuccess('Khôi phục mật khẩu thành công! Mật khẩu mới là: user123');
+      } else {
+        const err = await res.json();
+        setUserActionError(err.error || 'Có lỗi xảy ra khi khôi phục mật khẩu');
       }
     } catch {
       setUserActionError('Lỗi kết nối máy chủ không phản hồi');
@@ -147,7 +167,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   const [gameChangelogs, setGameChangelogs] = useState<{ version: string; date: string; content: string }[]>([]);
   const [newLogVersion, setNewLogVersion] = useState('');
   const [newLogContent, setNewLogContent] = useState('');
-  const [downloadLinks, setDownloadLinks] = useState<{ label: string; url: string; password?: string }[]>([
+  const [downloadLinks, setDownloadLinks] = useState<{ label: string; url: string; password?: string; isVip?: boolean }[]>([
     { label: 'Google Drive', url: '' }
   ]);
 
@@ -266,7 +286,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
     setDownloadLinks(updated);
   };
 
-  const handleLinkChange = (idx: number, field: string, value: string) => {
+  const handleLinkChange = (idx: number, field: string, value: any) => {
     const updated = [...downloadLinks] as any;
     updated[idx][field] = value;
     setDownloadLinks(updated);
@@ -1200,6 +1220,19 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                     />
                   </div>
 
+                  <div className="flex items-center gap-1.5 shrink-0 px-2 mt-2 sm:mt-0">
+                    <input
+                      type="checkbox"
+                      id={`vip-link-${idx}`}
+                      checked={link.isVip || false}
+                      onChange={(e) => handleLinkChange(idx, 'isVip', e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-700 text-fuchsia-500 focus:ring-fuchsia-500 bg-slate-950 cursor-pointer accent-fuchsia-500"
+                    />
+                    <label htmlFor={`vip-link-${idx}`} className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest cursor-pointer select-none">
+                      VIP
+                    </label>
+                  </div>
+
                   {downloadLinks.length > 1 && (
                     <button
                       type="button"
@@ -1754,9 +1787,11 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                               ? 'bg-red-950/40 text-red-400 border-red-900/20' 
                               : u.role === 'dichgia' 
                                 ? 'bg-amber-950/40 text-amber-500 border-amber-905' 
-                                : 'bg-slate-950/40 text-slate-400 border-slate-900/20'
+                                : u.role === 'vip'
+                                  ? 'bg-fuchsia-950/40 text-fuchsia-400 border-fuchsia-900/20'
+                                  : 'bg-slate-950/40 text-slate-400 border-slate-900/20'
                           }`}>
-                            {u.role === 'admin' ? 'Admin' : u.role === 'dichgia' ? 'Dịch giả' : 'Thành viên'}
+                            {u.role === 'admin' ? 'Admin' : u.role === 'dichgia' ? 'Dịch giả' : u.role === 'vip' ? 'VIP' : 'Thành viên'}
                           </span>
                         </td>
                         <td className="p-4">
@@ -1771,6 +1806,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                                 className="bg-slate-950 border border-white/10 hover:border-white/20 px-2 py-1 rounded text-xs text-white outline-none cursor-pointer"
                               >
                                 <option value="user">Thành viên</option>
+                                <option value="vip">Thành viên VIP</option>
                                 <option value="dichgia">Dịch giả</option>
                                 <option value="admin">Quản trị viên</option>
                               </select>
@@ -1789,16 +1825,25 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                         </td>
                         <td className="p-4 text-right">
                           {u.id !== 'admin-therum' ? (
-                            <button
-                              onClick={() => {
-                                setDeletingUserId(u.id);
-                                setDeletingUserName(u.username);
-                              }}
-                              className="p-1 text-zinc-500 hover:text-red-400 border border-transparent hover:border-slate-800 rounded transition-all cursor-pointer"
-                              title="Xóa tài khoản vĩnh viễn"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleResetUserPassword(u.id)}
+                                className="p-1.5 text-zinc-500 hover:text-amber-400 border border-transparent hover:border-slate-800 rounded transition-all cursor-pointer"
+                                title="Đặt lại mật khẩu về mặc định (user123)"
+                              >
+                                <Key className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setDeletingUserId(u.id);
+                                  setDeletingUserName(u.username);
+                                }}
+                                className="p-1.5 text-zinc-500 hover:text-red-400 border border-transparent hover:border-slate-800 rounded transition-all cursor-pointer"
+                                title="Xóa tài khoản vĩnh viễn"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-[10px] text-zinc-650 font-mono">Bảo vệ</span>
                           )}

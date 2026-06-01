@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Sparkles, ThumbsUp, Plus, Trash2, Calendar, Monitor, Smartphone, AlertCircle, HelpCircle } from 'lucide-react';
+import { Sparkles, ThumbsUp, Plus, Trash2, Calendar, Monitor, Smartphone, AlertCircle, HelpCircle, Link2, Cpu, BookOpen } from 'lucide-react';
 import { GameRequest, User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -17,6 +17,8 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [originalName, setOriginalName] = useState('');
+  const [link, setLink] = useState('');
+  const [engine, setEngine] = useState('');
   const [description, setDescription] = useState('');
   const [platforms, setPlatforms] = useState<string[]>(['Windows']);
   const [submitting, setSubmitting] = useState(false);
@@ -199,7 +201,9 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
           title: title.trim(),
           originalName: originalName.trim(),
           description: description.trim(),
-          platforms
+          platforms,
+          link: link.trim(),
+          engine: engine
         })
       });
 
@@ -207,6 +211,8 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
         // Clear forms
         setTitle('');
         setOriginalName('');
+        setLink('');
+        setEngine('');
         setDescription('');
         setPlatforms(['Windows']);
         setIsFormOpen(false);
@@ -321,30 +327,52 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-mono uppercase tracking-wider font-bold text-zinc-500 mb-1.5">
-                    Tên Game (Phiên bản tiếng Việt ước mong) *
+                    Tên Game (Tiếng Anh) *
                   </label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ví dụ: Căn Nhà Ở Fata Morgana"
+                    placeholder="Ví dụ: The House in Fata Morgana"
                     className="w-full text-xs font-sans px-3 py-2.5 bg-zinc-950/40 border border-white/10 rounded-xl outline-none focus:border-emerald-500/50 text-white transition-all shadow-inner"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-mono uppercase tracking-wider font-bold text-zinc-500 mb-1.5">
-                    Tên Gốc / Tên Tiếng Anh (Nếu có)
+                    Link tải game gốc (F95zone hoặc Itch) *
                   </label>
                   <input
-                    type="text"
-                    value={originalName}
-                    onChange={(e) => setOriginalName(e.target.value)}
-                    placeholder="Ví dụ: The House in Fata Morgana"
+                    type="url"
+                    required
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="Ví dụ: https://f95zone.to/..."
                     className="w-full text-xs font-sans px-3 py-2.5 bg-zinc-950/40 border border-white/10 rounded-xl outline-none focus:border-emerald-500/50 text-white transition-all shadow-inner"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wider font-bold text-zinc-500 mb-1.5">
+                  Chọn Engine (RenPy, Unity, RPG Maker...) *
+                </label>
+                <select
+                  required
+                  value={engine}
+                  onChange={(e) => setEngine(e.target.value)}
+                  className="w-full text-xs font-sans px-3 py-2.5 bg-zinc-950/40 hover:bg-zinc-900/60 border border-white/10 hover:border-white/20 rounded-xl outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 text-white transition-all shadow-inner cursor-pointer"
+                >
+                  <option value="" disabled className="bg-zinc-900 text-zinc-500">-- Chọn Engine --</option>
+                  <option value="RenPy" className="bg-zinc-900 text-white py-1">RenPy</option>
+                  <option value="Unity" className="bg-zinc-900 text-white py-1">Unity</option>
+                  <option value="RPG Maker" className="bg-zinc-900 text-white py-1">RPG Maker</option>
+                  <option value="TyranoBuilder" className="bg-zinc-900 text-white py-1">TyranoBuilder</option>
+                  <option value="KiriKiri" className="bg-zinc-900 text-white py-1">KiriKiri</option>
+                  <option value="HTML5/Web" className="bg-zinc-900 text-white py-1">HTML5/Web</option>
+                  <option value="Khác" className="bg-zinc-900 text-white py-1">Khác / Không rõ</option>
+                </select>
               </div>
 
               <div>
@@ -373,14 +401,21 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider font-bold text-zinc-500 mb-1.5">
-                  Lý do đề xuất / Giới thiệu sơ lược
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider font-bold text-zinc-500">
+                    Mô tả sơ qua lối chơi và cốt truyện *
+                  </label>
+                  <span className={`text-[10px] font-mono font-bold ${description.length >= 250 ? 'text-red-400' : 'text-zinc-600'}`}>
+                    {description.length}/250
+                  </span>
+                </div>
                 <textarea
+                  required
                   rows={3}
+                  maxLength={250}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Giới thiệu sơ lược giúp nhóm dịch nắm được lý do tại sao tựa game này hấp dẫn..."
+                  placeholder="Giới thiệu sơ lược về cốt truyện và lối chơi để nhóm dịch nắm bắt..."
                   className="w-full text-xs font-sans px-3 py-2.5 bg-zinc-950/40 border border-white/10 rounded-xl outline-none focus:border-emerald-500/50 text-white transition-all shadow-inner resize-none min-h-[80px]"
                 />
               </div>
@@ -448,25 +483,41 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
                 </div>
 
                 {/* Left side: Request metadata & Descriptions */}
-                <div className="space-y-2 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-extrabold text-sm sm:text-base text-zinc-100 group-hover:text-emerald-400 transition-colors">
-                      {req.title}
-                    </h3>
-                    {req.originalName && (
-                      <span className="text-[11px] text-zinc-500 font-mono italic">
-                        ({req.originalName})
+                <div className="space-y-3 flex-1 w-full max-w-full overflow-hidden">
+                  <h3 className="font-extrabold text-sm sm:text-base text-zinc-100 group-hover:text-emerald-400 transition-colors mb-2">
+                    {req.title}
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-zinc-400 bg-zinc-950/20 p-2.5 rounded-xl border border-white/5">
+                    <div className="flex items-start gap-1.5">
+                      <Link2 className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                      <span className="font-bold text-zinc-500 shrink-0 mt-0.5">Link gốc:</span>
+                      {req.link ? (
+                        <a href={req.link} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-400 transition-colors break-all line-clamp-1 hover:line-clamp-none">
+                          {req.link}
+                        </a>
+                      ) : (
+                        <span className="italic text-zinc-600">Không có</span>
+                      )}
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <Cpu className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                      <span className="font-bold text-zinc-500 shrink-0 mt-0.5">Engine:</span>
+                      <span className="text-zinc-300 font-mono text-[11px] bg-zinc-800/50 px-2 py-0.5 rounded border border-white/5">
+                        {req.engine || 'Không rõ'}
                       </span>
-                    )}
+                    </div>
                   </div>
 
-                  {req.description && (
-                    <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed max-w-xl">
-                      {req.description}
-                    </p>
-                  )}
+                  <div className="text-xs text-zinc-300 bg-zinc-950/40 p-3 rounded-xl border border-white/5">
+                    <div className="font-bold text-zinc-500 mb-1.5 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Lối chơi & Cốt truyện</span>
+                    </div>
+                    <div className="leading-relaxed whitespace-pre-wrap">{req.description || <span className="italic text-zinc-600">Không có mô tả</span>}</div>
+                  </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-zinc-500">
+                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-zinc-500 pt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-zinc-600" />
                       <span>{new Date(req.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -480,8 +531,9 @@ export default function GameRequests({ user, onTriggerLogin }: GameRequestsProps
 
                     {/* Platforms lists */}
                     <div className="flex items-center gap-1.5">
+                      <span className="font-sans font-bold text-zinc-600 mr-0.5">Hỗ trợ:</span>
                       {req.platforms?.map(p => (
-                        <span key={p} className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded text-[9px] border border-white/5">
+                        <span key={p} className="px-1.5 py-0.5 bg-zinc-800 text-zinc-300 rounded text-[9px] border border-white/5">
                           {p}
                         </span>
                       ))}
