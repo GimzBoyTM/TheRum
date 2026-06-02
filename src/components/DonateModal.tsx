@@ -16,7 +16,7 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
     bankName: 'Ngân hàng Ngoại thương Việt Nam (Vietcombank)',
     accountNumber: '1033519370',
     accountName: 'VŨ DUY THÀNH',
-    message: '[Tên của bạn] donate for TheRum',
+    message: '[username] + [email] donate.',
   };
 
   const handleCopy = (text: string, field: string) => {
@@ -157,7 +157,7 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
               </div>
 
               {/* Presets Grid */}
-              <div className="space-y-2 border-t border-white/5 pt-4">
+              <div className="space-y-4 border-t border-white/5 pt-4">
                 {/* <div className="flex items-center gap-1.5 text-zinc-400">
                   <Sparkles className="w-3.5 h-3.5 text-rose-500" />
                   <span className="text-xs font-bold font-sans uppercase tracking-wider">Chọn nhanh số tiền uống coffee</span>
@@ -177,6 +177,17 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
                     </button>
                   ))}
                 </div> */}
+
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 space-y-2">
+                  <h4 className="text-sm font-bold text-rose-400 flex items-center gap-2">
+                    Cảm ơn bạn đã muốn Donate/ủng hộ ❤️
+                  </h4>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Để đăng ký tài khoản VIP, bạn cần donate <strong className="text-emerald-400 font-bold">36k</strong>. Hãy chụp màn hình thanh toán và gửi về page <a href="https://www.facebook.com/people/The-Rum/61590124352436/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 font-bold hover:underline transition-colors">TheRum</a> để admin xác nhận lên tài khoản VIP nhé 🫶
+                  </p>
+                  <p className="text-xs text-zinc-300 font-medium">Xin cảm ơn rất nhiều!</p>
+                </div>
+
                 <p className="text-[10px] text-zinc-550 italic leading-snug">
                   * Note: Mọi khoản đóng góp của bạn bất kể lớn nhỏ đều là nguồn động lực cực kỳ to lớn giúp nhóm dịch trả phí máy chủ lưu trữ (free speed tối đa) và duy trì nhóm!
                 </p>

@@ -359,11 +359,10 @@ export default function GameDetail({
                       game.downloadLinks.map((link, idx) => (
                         <div
                           key={idx}
-                          className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl transition-all ${
-                            link.isVip 
-                              ? 'border border-fuchsia-500/20 bg-fuchsia-950/10 hover:border-fuchsia-500/40 hover:bg-fuchsia-950/20 shadow-[inset_0_0_20px_rgba(217,70,239,0.05)]' 
+                          className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl transition-all ${link.isVip
+                              ? 'border border-fuchsia-500/20 bg-fuchsia-950/10 hover:border-fuchsia-500/40 hover:bg-fuchsia-950/20 shadow-[inset_0_0_20px_rgba(217,70,239,0.05)]'
                               : 'border border-white/5 hover:border-emerald-500/30 bg-zinc-900/50 hover:bg-zinc-800/80'
-                          }`}
+                            }`}
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -397,15 +396,15 @@ export default function GameDetail({
                             >
                               <Lock className="w-4 h-4" />
                               <span>Độc quyền VIP</span>
+                              <span className="animate-pulse">| Donate để có VIP</span>
                             </button>
                           ) : (
                             <button
                               onClick={() => handleDownloadClick(link.url)}
-                              className={`px-4 py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0 w-full sm:w-auto ${
-                                link.isVip 
+                              className={`px-4 py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0 w-full sm:w-auto ${link.isVip
                                   ? 'bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 hover:from-fuchsia-500 hover:to-fuchsia-400 text-white shadow-fuchsia-500/20 border border-fuchsia-400/20'
                                   : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/15'
-                              }`}
+                                }`}
                             >
                               <Download className="w-4 h-4" />
                               <span>Tải Về Ngay</span>
