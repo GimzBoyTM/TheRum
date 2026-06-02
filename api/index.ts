@@ -917,11 +917,14 @@ initDriveService();
       });
     });
   } else {
-    const distPath = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    // Only serve static files if NOT running on Vercel
+    if (!process.env.VERCEL) {
+      const distPath = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
     if (!process.env.VERCEL) {
       app.listen(PORT, '0.0.0.0', () => {
         console.log(`TheRum custom backend server running on http://0.0.0.0:${PORT} (prod)`);
