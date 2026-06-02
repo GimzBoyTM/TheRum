@@ -43,6 +43,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  googleEmail?: string;
   password?: string; // Stored securely
   role: 'user' | 'admin' | 'dichgia' | 'vip';
   avatarUrl?: string;

@@ -14,6 +14,7 @@ async function initDatabase() {
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
+      google_email TEXT,
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       avatar_url TEXT

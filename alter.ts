@@ -1,15 +1,15 @@
 import { sql } from './src/db/neonClient.js';
 
-async function alter() {
+async function alterDatabase() {
   try {
-    await sql`ALTER TABLE game_requests ADD COLUMN IF NOT EXISTS link TEXT;`;
-    await sql`ALTER TABLE game_requests ADD COLUMN IF NOT EXISTS engine TEXT;`;
-    console.log("Database altered successfully");
+    console.log('Adding google_email column to users table...');
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email TEXT;`;
+    console.log('Column added successfully.');
   } catch (err) {
-    console.error(err);
+    console.error('Error altering table:', err);
   } finally {
     process.exit(0);
   }
 }
 
-alter();
+alterDatabase();

@@ -2,9 +2,14 @@ import express from 'express';
 import path from 'path';
 import { db } from '../src/db/dbService.js';
 import { Game, User, BrokenReport, GameRequest } from '../src/types.js';
+import { initDriveService, grantDrivePermission } from './driveService.js';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const SECRET_KEY = process.env.THERUM_SECRET_KEY || 'default-secret-key-123';
+
+// Initialize Drive API
+initDriveService();
 
   app.use(express.json({ limit: '10mb' }));
 
@@ -28,11 +33,17 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   // Middleware for checking Auth
   const authMiddleware = (req: any, res: any, next: any) => {
+    let token = null;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
       return res.status(418).json({ error: 'Chưa đăng nhập' });
     }
-    const token = authHeader.split(' ')[1];
     const user = verifyToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
@@ -57,6 +68,15 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       }
       next();
     });
+  };
+
+  const extractDriveId = (url: string) => {
+    if (!url) return null;
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    const match2 = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match2) return match2[1];
+    return null;
   };
 
   // =================== API ENDPOINTS ===================
@@ -280,6 +300,12 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
           ...g,
           downloadLinks: g.downloadLinks.map(link => {
             if (link.isVip && !canViewVip) return { ...link, url: '' };
+            if (link.isVip && canViewVip) {
+              const fileId = extractDriveId(link.url);
+              if (fileId) {
+                return { ...link, url: `/api/vip-download/${fileId}/grant` };
+              }
+            }
             return link;
           })
         };
@@ -360,6 +386,12 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
           if (link.isVip && !canViewVip) {
             return { ...link, url: '' };
           }
+          if (link.isVip && canViewVip) {
+            const fileId = extractDriveId(link.url);
+            if (fileId) {
+              return { ...link, url: `/api/vip-download/${fileId}/grant` };
+            }
+          }
           return link;
         });
       }
@@ -382,6 +414,53 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
       res.json({ count });
     } catch (err: any) {
       res.status(500).json({ error: 'Lỗi máy chủ' });
+    }
+  });
+
+  // VIP Drive Grant Endpoint
+  app.post('/api/vip-download/:fileId/grant', authMiddleware, async (req: any, res) => {
+    try {
+      const { role } = req.user;
+      const canViewVip = role === 'vip' || role === 'admin' || role === 'dichgia';
+      if (!canViewVip) {
+        return res.status(403).json({ error: 'Tính năng này chỉ dành cho tài khoản VIP.' });
+      }
+      
+      const fileId = req.params.fileId;
+      if (!fileId) {
+        return res.status(400).json({ error: 'Thiếu fileId' });
+      }
+
+      // Get user from DB
+      const user = await db.getUserById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+      }
+
+      // If user submits a new googleEmail
+      const { googleEmail } = req.body;
+      if (googleEmail && googleEmail.trim() !== '') {
+        await db.updateUserGoogleEmail(req.user.id, googleEmail.trim());
+        user.googleEmail = googleEmail.trim();
+      }
+
+      const targetEmail = user.googleEmail || user.email;
+
+      try {
+        await grantDrivePermission(fileId, targetEmail);
+        res.json({ url: `https://drive.google.com/file/d/${fileId}/view` });
+      } catch (grantErr: any) {
+        if (grantErr.message === 'invalid_email') {
+          return res.status(400).json({ 
+            requireGoogleEmail: true, 
+            error: 'Email không hợp lệ hoặc không phải Gmail. Vui lòng nhập tài khoản Google của bạn.' 
+          });
+        }
+        throw grantErr;
+      }
+    } catch (err: any) {
+      console.error('Lỗi khi cấp quyền VIP:', err);
+      res.status(500).json({ error: 'Lỗi server' });
     }
   });
 

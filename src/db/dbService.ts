@@ -10,6 +10,7 @@ function rowToUser(r: any): User {
     id: r.id,
     username: r.username,
     email: r.email,
+    googleEmail: r.google_email,
     password: r.password,
     role: r.role,
     avatarUrl: r.avatar_url,
@@ -116,8 +117,8 @@ export const db = {
     if (Array.isArray(data.users)) {
       for (const u of data.users) {
         await sql`
-          INSERT INTO users (id, username, email, password, role, avatar_url)
-          VALUES (${u.id}, ${u.username}, ${u.email}, ${u.password || ''}, ${u.role || 'user'}, ${u.avatarUrl || u.avatar_url || null})
+          INSERT INTO users (id, username, email, google_email, password, role, avatar_url)
+          VALUES (${u.id}, ${u.username}, ${u.email}, ${u.googleEmail || u.google_email || null}, ${u.password || ''}, ${u.role || 'user'}, ${u.avatarUrl || u.avatar_url || null})
         `;
       }
     }
@@ -204,21 +205,25 @@ export const db = {
     await sql`TRUNCATE users CASCADE`;
     for (const u of users) {
       await sql`
-        INSERT INTO users (id, username, email, password, role, avatar_url)
-        VALUES (${u.id}, ${u.username}, ${u.email}, ${u.password || ''}, ${u.role}, ${u.avatarUrl || null})
+        INSERT INTO users (id, username, email, google_email, password, role, avatar_url)
+        VALUES (${u.id}, ${u.username}, ${u.email}, ${u.googleEmail || null}, ${u.password || ''}, ${u.role}, ${u.avatarUrl || null})
       `;
     }
   },
 
   addUser: async (user: User) => {
     await sql`
-      INSERT INTO users (id, username, email, password, role, avatar_url)
-      VALUES (${user.id}, ${user.username}, ${user.email}, ${user.password || ''}, ${user.role}, ${user.avatarUrl || null})
+      INSERT INTO users (id, username, email, google_email, password, role, avatar_url)
+      VALUES (${user.id}, ${user.username}, ${user.email}, ${user.googleEmail || null}, ${user.password || ''}, ${user.role}, ${user.avatarUrl || null})
     `;
   },
 
   updateUserRole: async (id: string, role: string) => {
     await sql`UPDATE users SET role = ${role} WHERE id = ${id}`;
+  },
+
+  updateUserGoogleEmail: async (id: string, googleEmail: string) => {
+    await sql`UPDATE users SET google_email = ${googleEmail} WHERE id = ${id}`;
   },
 
   deleteUser: async (id: string) => {

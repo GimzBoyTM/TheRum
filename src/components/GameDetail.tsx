@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import {
   ArrowLeft, Download, Bookmark, Award, AlertTriangle, Monitor,
   Smartphone, Globe, Calendar, Eye, Heart, Key, Check, ChevronRight, MessageSquare,
-  Lock, Sparkles
+  Lock, Sparkles, Loader2
 } from 'lucide-react';
 import { Game, User } from '../types';
 
@@ -33,6 +33,12 @@ export default function GameDetail({
   const [reportSuccess, setReportSuccess] = useState('');
   const [reportError, setReportError] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
+
+  // VIP Download States
+  const [isGranting, setIsGranting] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [googleEmailInput, setGoogleEmailInput] = useState('');
+  const [pendingGrantUrl, setPendingGrantUrl] = useState('');
 
   // Platform icon helper
   const renderPlatformIcon = (platform: string) => {
@@ -64,8 +70,86 @@ export default function GameDetail({
     } catch {
       // safe fallback
     }
-    // Open url
+
+    // Handle VIP Grant Flow
+    if (linkUrl.includes('/api/vip-download/')) {
+      const token = localStorage.getItem('therum_token');
+      if (!token) return onTriggerLogin();
+
+      setIsGranting(true);
+      try {
+        const res = await fetch(linkUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          if (data.requireGoogleEmail) {
+            setPendingGrantUrl(linkUrl);
+            setShowEmailModal(true);
+          } else {
+            alert(data.error || 'Lỗi khi cấp quyền tải VIP');
+          }
+          setIsGranting(false);
+          return;
+        }
+
+        if (data.url) {
+          window.open(data.url, '_blank');
+        }
+      } catch (err) {
+        alert('Lỗi ngoại lệ khi xử lý link tải VIP');
+      } finally {
+        setIsGranting(false);
+      }
+      return;
+    }
+
+    // Open normal url
     window.open(linkUrl, '_blank');
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleEmailInput.trim().endsWith('@gmail.com')) {
+      alert('Vui lòng nhập đúng định dạng @gmail.com');
+      return;
+    }
+
+    const token = localStorage.getItem('therum_token');
+    if (!token) return;
+
+    setShowEmailModal(false);
+    setIsGranting(true);
+    try {
+      const res = await fetch(pendingGrantUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ googleEmail: googleEmailInput })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        alert(data.error || 'Lỗi khi cấp quyền tải VIP');
+        setIsGranting(false);
+        return;
+      }
+
+      if (data.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      alert('Lỗi ngoại lệ khi xử lý link tải VIP');
+    } finally {
+      setIsGranting(false);
+    }
   };
 
   const submitReport = async (e: React.FormEvent) => {
@@ -559,6 +643,63 @@ export default function GameDetail({
       </div>
 
       {/* REPORT MODAL */}
+      {/* Granting Overlay */}
+      {isGranting && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="flex items-center gap-3 px-6 py-4 bg-emerald-900 text-emerald-100 rounded-xl shadow-2xl border border-emerald-500/30">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="font-medium text-sm">Đang cấp quyền Google Drive, vui lòng chờ...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Google Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden relative shadow-black/80">
+            <div className="h-1 bg-blue-500" />
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4 text-blue-400">
+                <Globe className="w-5 h-5 shrink-0" />
+                <h3 className="text-lg font-bold font-sans text-white">Xác nhận Google Email</h3>
+              </div>
+              <p className="text-zinc-400 text-sm mb-4">
+                Email đăng ký của bạn không phải là một tài khoản Google hợp lệ. Hệ thống không thể chia sẻ quyền tải game vào email này.
+                <br /><br />
+                Vui lòng nhập địa chỉ <strong>@gmail.com</strong> của bạn dưới đây. Chúng tôi sẽ lưu lại để cấp quyền cho các lần tải sau.
+              </p>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <input
+                    type="email"
+                    required
+                    value={googleEmailInput}
+                    onChange={(e) => setGoogleEmailInput(e.target.value)}
+                    placeholder="ví dụ: taikhoan_cua_ban@gmail.com"
+                    className="w-full p-3 bg-zinc-900/60 backdrop-blur-sm border border-white/5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/35 rounded-xl outline-none text-zinc-120 text-sm leading-relaxed placeholder:text-zinc-650"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailModal(false)}
+                    className="px-4 py-2 border border-white/5 bg-zinc-900 hover:bg-zinc-805 text-zinc-400 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+                  >
+                    Xác nhận
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showReportModal && (
         <div id="report-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div id="report-modal" className="w-full max-w-md bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden relative shadow-black/80">
