@@ -1200,7 +1200,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                   <div className="relative w-full sm:flex-1">
                     <Link className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
                     <input
-                      type="url"
+                      type={link.isVip ? "text" : "url"}
                       required
                       value={link.url}
                       onChange={(e) => handleLinkChange(idx, 'url', e.target.value)}

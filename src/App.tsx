@@ -177,6 +177,7 @@ export default function App() {
       if (selectedPlatform) params.append('platform', selectedPlatform);
       if (selectedStatus) params.append('status', selectedStatus);
       if (sortBy) params.append('sortBy', sortBy);
+      if (page) params.append('page', page.toString());
       const headers: HeadersInit = {};
       const token = localStorage.getItem('therum_token');
       if (token) {
