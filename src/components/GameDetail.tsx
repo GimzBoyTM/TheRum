@@ -450,8 +450,10 @@ export default function GameDetail({
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className={`text-sm font-bold truncate ${link.isVip ? 'text-fuchsia-300' : 'text-zinc-200'}`}>
-                                {link.label}
+                              <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${link.isVip ? 'text-fuchsia-300' : 'text-zinc-200'}`}>
+                                {link.device === 'pc' && <Monitor className="w-4 h-4 text-emerald-400 shrink-0" />}
+                                {link.device === 'mobile' && <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />}
+                                <span>{link.label}</span>
                               </p>
                               {link.isVip && (
                                 <span className="text-[9px] font-black uppercase tracking-widest bg-fuchsia-500 text-slate-950 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm shadow-fuchsia-500/20">

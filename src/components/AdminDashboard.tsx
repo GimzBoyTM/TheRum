@@ -1185,7 +1185,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
             <div className="space-y-2.5">
               {downloadLinks.map((link, idx) => (
                 <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 border-b border-slate-900/40 pb-2.5 sm:border-0 sm:pb-0">
-                  <div className="relative w-full sm:w-1/3">
+                  <div className="relative w-full sm:w-1/4">
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 font-bold text-[10px] uppercase font-mono">Label</span>
                     <input
                       type="text"
@@ -1195,6 +1195,18 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                       placeholder="ví dụ: Google Drive (PC)"
                       className="w-full pl-12 pr-2 py-2 bg-slate-950 border border-slate-850 text-xs rounded-lg text-slate-300 outline-none"
                     />
+                  </div>
+
+                  <div className="relative w-full sm:w-[15%]">
+                    <select
+                      value={link.device || 'default'}
+                      onChange={(e) => handleLinkChange(idx, 'device', e.target.value)}
+                      className="w-full px-2 py-2 bg-slate-950 border border-slate-850 text-xs rounded-lg text-slate-300 outline-none cursor-pointer"
+                    >
+                      <option value="default">Icon (Mặc định)</option>
+                      <option value="pc">PC</option>
+                      <option value="mobile">Mobile</option>
+                    </select>
                   </div>
 
                   <div className="relative w-full sm:flex-1">

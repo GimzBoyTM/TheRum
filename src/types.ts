@@ -3,6 +3,7 @@ export interface DownloadLink {
   url: string;
   password?: string;
   isVip?: boolean;
+  device?: 'pc' | 'mobile' | 'default' | string;
 }
 
 export interface Changelog {
