@@ -659,6 +659,17 @@ initDriveService();
     }
   });
 
+  app.get('/api/admin/games', adminOrDichGiaMiddleware, async (req: any, res) => {
+    try {
+      const games = await db.getGames();
+      // Sort newest first
+      games.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      res.json(games);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Lỗi tải danh sách game' });
+    }
+  });
+
   app.get('/api/admin/reports', adminMiddleware, async (req, res) => {
     try {
       res.json(await db.getBrokenReports());

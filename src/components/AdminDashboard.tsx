@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, Edit, Trash2, CheckCircle2, AlertOctagon, LayoutDashboard, 
+import {
+  Plus, Edit, Trash2, CheckCircle2, AlertOctagon, LayoutDashboard,
   Settings, Key, Trash, Link, Globe, AlertCircle, Sparkles, FolderPlus, Compass,
   Database, Download, Upload
 } from 'lucide-react';
@@ -15,17 +15,42 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ currentUser, onRefreshedGames, gamesList, onSelectGame }: AdminDashboardProps) {
+  const [adminGamesList, setAdminGamesList] = useState<Game[]>([]);
+
   const displayGames = currentUser?.role === 'admin'
-    ? gamesList
-    : gamesList.filter(game => game.uploaderId === currentUser?.id);
+    ? adminGamesList
+    : adminGamesList.filter(game => game.uploaderId === currentUser?.id);
 
   const [activeSubTab, setActiveSubTab] = useState<'stats' | 'add' | 'edit' | 'reports' | 'config' | 'users' | 'database'>('stats');
   const [reports, setReports] = useState<BrokenReport[]>([]);
   const [requestsList, setRequestsList] = useState<GameRequest[]>([]);
   const [stats, setStats] = useState({ totalGames: 0, totalUsers: 0, pendingReports: 0, pendingRequests: 0, totalDownloads: 0 });
 
+  // Pagination states
+  const [gamesCurrentPage, setGamesCurrentPage] = useState(1);
+  const gamesPerPage = 10;
+  const [usersCurrentPage, setUsersCurrentPage] = useState(1);
+  const usersPerPage = 10;
+
+  // Paginated Games
+  const totalGamesPages = Math.max(1, Math.ceil(displayGames.length / gamesPerPage));
+  const safeGamesCurrentPage = Math.min(gamesCurrentPage, totalGamesPages);
+  const indexOfLastGame = safeGamesCurrentPage * gamesPerPage;
+  const indexOfFirstGame = indexOfLastGame - gamesPerPage;
+  const currentGames = displayGames.slice(indexOfFirstGame, indexOfLastGame);
+
   // User Management states
   const [usersList, setUsersList] = useState<User[]>([]);
+  const [searchUserQuery, setSearchUserQuery] = useState('');
+
+  // Paginated Users
+  const filteredUsers = usersList.filter(u => u.username.toLowerCase().includes(searchUserQuery.toLowerCase()) || u.email.toLowerCase().includes(searchUserQuery.toLowerCase()));
+  const totalUsersPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  const safeUsersCurrentPage = Math.min(usersCurrentPage, totalUsersPages);
+  const indexOfLastUser = safeUsersCurrentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userActionError, setUserActionError] = useState('');
   const [userActionSuccess, setUserActionSuccess] = useState('');
@@ -243,6 +268,19 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
         }
       } catch (err) {
         console.error("Error fetching requests for chart:", err);
+      }
+
+      // Fetch admin games list
+      try {
+        const gamesRes = await fetch('/api/admin/games', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (gamesRes.ok) {
+          const gamesData = await gamesRes.json();
+          setAdminGamesList(gamesData);
+        }
+      } catch (err) {
+        console.error("Error fetching admin games:", err);
       }
 
       if (currentUser?.role !== 'admin') {
@@ -470,7 +508,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   };
 
   const DEFAULT_GENRES = [
-    'Romance', 'Drama', 'Slice of Life', 'Action', 'Fantasy', 'Mystery', 
+    'Romance', 'Drama', 'Slice of Life', 'Action', 'Fantasy', 'Mystery',
     'Sci-Fi', 'Psychological', 'Thriller', 'Gothic', 'Tragedy', 'Horror', 'School Life'
   ];
   const DEFAULT_ENGINES = ['RenPy', 'KiriKiri', 'Unity', 'RPG Maker', 'TyranoBuilder'];
@@ -519,7 +557,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
   return (
     <div className="space-y-6">
-      
+
       {/* Title */}
       <div className="flex items-center gap-2 mb-2">
         <LayoutDashboard className="w-6 h-6 text-emerald-400" />
@@ -532,11 +570,10 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
       <div className="flex flex-wrap border-b border-white/5 bg-zinc-900/40 backdrop-blur-sm p-1 rounded-xl gap-1">
         <button
           onClick={() => setActiveSubTab('stats')}
-          className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            activeSubTab === 'stats'
+          className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${activeSubTab === 'stats'
               ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
               : 'text-zinc-500 hover:text-white'
-          }`}
+            }`}
         >
           {currentUser?.role === 'admin' ? 'Thống kê & Danh sách game' : 'Danh sách game đã đăng'}
         </button>
@@ -545,25 +582,23 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
             resetFormFields();
             setActiveSubTab('add');
           }}
-          className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeSubTab === 'add'
+          className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeSubTab === 'add'
               ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
               : 'text-zinc-500 hover:text-white'
-          }`}
+            }`}
         >
           <Plus className="w-4 h-4" />
           <span>Đăng Game Việt Hóa mới</span>
         </button>
-        
+
         {currentUser?.role === 'admin' && (
           <>
             <button
               onClick={() => setActiveSubTab('reports')}
-              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer relative ${
-                activeSubTab === 'reports'
+              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer relative ${activeSubTab === 'reports'
                   ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
                   : 'text-zinc-500 hover:text-white'
-              }`}
+                }`}
             >
               <span>Báo sập link / Lỗi liên kết</span>
               {stats.pendingReports > 0 && (
@@ -574,33 +609,30 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
             </button>
             <button
               onClick={() => setActiveSubTab('config')}
-              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeSubTab === 'config'
+              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeSubTab === 'config'
                   ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
                   : 'text-zinc-500 hover:text-white'
-              }`}
+                }`}
             >
               <Settings className="w-4 h-4 text-emerald-400" />
               <span>QL Bộ lọc & Thể loại</span>
             </button>
             <button
               onClick={() => setActiveSubTab('users')}
-              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeSubTab === 'users'
+              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeSubTab === 'users'
                   ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
                   : 'text-zinc-500 hover:text-white'
-              }`}
+                }`}
             >
               <Key className="w-4 h-4 text-amber-500" />
               <span>Quản lý Tài khoản (Phân quyền)</span>
             </button>
             <button
               onClick={() => setActiveSubTab('database')}
-              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeSubTab === 'database'
+              className={`flex-1 min-w-[125px] py-2 text-center text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeSubTab === 'database'
                   ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
                   : 'text-zinc-500 hover:text-white'
-              }`}
+                }`}
             >
               <Database className="w-4 h-4 text-emerald-400" />
               <span>Sao lưu & Khôi phục</span>
@@ -612,10 +644,10 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
       {/* SUB-TAB CONTENTS */}
       {activeSubTab === 'stats' && (
         <div className="space-y-6">
-          
+
           {/* Statistics grid layout */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            
+
             <div className="p-4 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-sm shadow-md">
               <span className="text-[10px] text-zinc-500 block uppercase font-mono font-bold tracking-wider">Tổng số game</span>
               <strong className="text-2xl text-white font-mono mt-1 block">{stats.totalGames}</strong>
@@ -687,22 +719,22 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                       margin={{ top: 15, right: 10, left: -25, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="#71717a" 
+                      <XAxis
+                        dataKey="name"
+                        stroke="#71717a"
                         fontSize={9.5}
                         tickLine={false}
                         axisLine={false}
                         dy={5}
                       />
-                      <YAxis 
-                        stroke="#71717a" 
+                      <YAxis
+                        stroke="#71717a"
                         fontSize={10}
                         tickLine={false}
                         axisLine={false}
                         allowDecimals={false}
                       />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                         content={({ active, payload }: any) => {
                           if (active && payload && payload.length) {
@@ -718,7 +750,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                             );
                           }
                           return null;
-                        }} 
+                        }}
                       />
                       <Bar dataKey="votes" radius={[5, 5, 0, 0]}>
                         {[...requestsList]
@@ -753,11 +785,10 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                     return (
                       <div key={req.id} className="py-2.5 flex items-center justify-between gap-3 group hover:bg-white/[0.01] px-1 rounded transition-colors">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <span className={`w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black shrink-0 ${
-                            idx === 0 ? 'bg-amber-500 text-black' :
-                            idx === 1 ? 'bg-slate-300 text-black' :
-                            idx === 2 ? 'bg-amber-700 text-white' : 'bg-zinc-800 text-zinc-400'
-                          }`}>
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black shrink-0 ${idx === 0 ? 'bg-amber-500 text-black' :
+                              idx === 1 ? 'bg-slate-300 text-black' :
+                                idx === 2 ? 'bg-amber-700 text-white' : 'bg-zinc-800 text-zinc-400'
+                            }`}>
                             {idx + 1}
                           </span>
                           <span className="text-xs text-slate-200 truncate font-semibold font-sans">{req.title}</span>
@@ -800,12 +831,12 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-zinc-300">
-                  {displayGames.map(game => (
+                  {currentGames.map(game => (
                     <tr key={game.id} className="hover:bg-slate-900/20 transition-colors">
                       <td className="p-4 flex items-center gap-3 min-w-[300px]">
-                        <img 
-                          src={game.coverUrl} 
-                          alt={game.title} 
+                        <img
+                          src={game.coverUrl}
+                          alt={game.title}
                           className="w-8 h-12 rounded object-cover border border-slate-900 shrink-0"
                           referrerPolicy="no-referrer"
                         />
@@ -819,9 +850,8 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                         <p className="text-[10px] text-slate-500 font-sans">{game.platforms.join(', ')}</p>
                       </td>
                       <td className="p-4">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                          game.status === 'Hoàn thành' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900/20' : 'bg-blue-950/40 text-blue-400 border-blue-900/20'
-                        }`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${game.status === 'Hoàn thành' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900/20' : 'bg-blue-950/40 text-blue-400 border-blue-900/20'
+                          }`}>
                           {game.status}
                         </span>
                       </td>
@@ -861,6 +891,28 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                 </tbody>
               </table>
             </div>
+
+            <div className="flex justify-center items-center gap-2 p-4 border-t border-white/5 bg-zinc-950/40">
+              <button
+                type="button"
+                onClick={() => setGamesCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safeGamesCurrentPage === 1}
+                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-slate-300 font-semibold rounded text-[10px] transition-colors cursor-pointer"
+              >
+                Trước
+              </button>
+              <span className="text-[10px] text-zinc-500 font-mono">
+                Trang {safeGamesCurrentPage} / {totalGamesPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGamesCurrentPage(p => Math.min(totalGamesPages, p + 1))}
+                disabled={safeGamesCurrentPage === totalGamesPages}
+                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-slate-300 font-semibold rounded text-[10px] transition-colors cursor-pointer"
+              >
+                Tiếp
+              </button>
+            </div>
           </div>
 
         </div>
@@ -869,7 +921,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
       {/* SUB-TAB CONTENTS: Form Add / Edit */}
       {(activeSubTab === 'add' || activeSubTab === 'edit') && (
         <form onSubmit={handleGameSubmit} className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-6 space-y-6 shadow-md">
-          
+
           <div className="flex items-center gap-2 border-b border-white/5 pb-2">
             <Sparkles className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-zinc-100 font-sans">
@@ -891,7 +943,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
           {/* Form grid row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider block">Tiêu Đề Game</label>
               <input
@@ -920,7 +972,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
           {/* Form grid row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider block">Hãng phát triển (Developer)</label>
               <input
@@ -951,7 +1003,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
           {/* Form grid row 3: URLs Images */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider block">URL Ảnh Bìa (Cover Art 2:3 ratio)</label>
               <input
@@ -978,7 +1030,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
           {/* Form grid row 4: Status / Engine */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider block">Trạng Thái Dịch</label>
               <select
@@ -1038,11 +1090,10 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                       type="button"
                       key={g}
                       onClick={() => handleTagToggle(g)}
-                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                        active 
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold' 
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${active
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold'
                           : 'bg-slate-950 text-slate-500 border-slate-850 hover:text-slate-300'
-                      }`}
+                        }`}
                     >
                       {g}
                     </button>
@@ -1061,11 +1112,10 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                       type="button"
                       key={g}
                       onClick={() => handleTagToggle(g)}
-                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                        active 
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold' 
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${active
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold'
                           : 'bg-slate-950 text-slate-500 border-slate-850 hover:text-slate-300'
-                      }`}
+                        }`}
                     >
                       {g}
                     </button>
@@ -1079,7 +1129,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
           <div className="space-y-1.5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1">
               <label className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider">Mô tả đầy đủ chi tiết (Hỗ trợ Markdown)</label>
-              
+
               {/* Quick Markdown Toolbar */}
               <div className="flex flex-wrap items-center gap-1 bg-zinc-950/40 p-1 border border-white/5 rounded-lg select-none">
                 <button
@@ -1444,7 +1494,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
       {/* SUB-TAB CONTENTS: Reports List */}
       {activeSubTab === 'reports' && (
         <div className="space-y-4">
-          
+
           <div className="border border-slate-900 bg-slate-950 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-4 border-b border-slate-900 text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">
               Danh sách báo liên kết tải hỏng từ người dùng
@@ -1746,9 +1796,23 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
           </div>
 
           <div className="border border-white/5 bg-zinc-900/40 backdrop-blur-sm p-6 rounded-2xl shadow-md space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <h3 className="text-sm font-bold text-slate-204">Danh Sách Tài Khoản Người Dùng</h3>
-              <span className="text-xs font-mono font-bold text-zinc-500">{usersList.length} Tài khoản</span>
+            <div className="flex flex-col sm:flex-row items-center justify-between pb-3 border-b border-white/5 gap-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-204">Danh Sách Tài Khoản Người Dùng</h3>
+                <span className="text-xs font-mono font-bold text-zinc-500">{filteredUsers.length} Tài khoản</span>
+              </div>
+              <div className="w-full sm:w-64">
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên hoặc email..."
+                  value={searchUserQuery}
+                  onChange={(e) => {
+                    setSearchUserQuery(e.target.value);
+                    setUsersCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
             </div>
 
             {userActionError && (
@@ -1764,8 +1828,8 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
 
             {loadingUsers ? (
               <div className="text-center py-12 text-xs text-zinc-500 font-mono">Đang tải danh sách tài khoản...</div>
-            ) : usersList.length === 0 ? (
-              <div className="text-center py-12 text-xs text-zinc-500 font-mono">Không có dữ liệu tài khoản nào.</div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="text-center py-12 text-xs text-zinc-500 font-mono">Không tìm thấy tài khoản nào.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs divide-y divide-white/5">
@@ -1779,7 +1843,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-zinc-300">
-                    {usersList.map(u => (
+                    {currentUsers.map(u => (
                       <tr key={u.id} className="hover:bg-slate-900/20 transition-colors">
                         <td className="p-4 flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-zinc-850 border border-white/10 flex items-center justify-center font-bold text-slate-300 text-xs">
@@ -1794,15 +1858,14 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                           {u.email}
                         </td>
                         <td className="p-4">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                            u.role === 'admin' 
-                              ? 'bg-red-950/40 text-red-400 border-red-900/20' 
-                              : u.role === 'dichgia' 
-                                ? 'bg-amber-950/40 text-amber-500 border-amber-905' 
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${u.role === 'admin'
+                              ? 'bg-red-950/40 text-red-400 border-red-900/20'
+                              : u.role === 'dichgia'
+                                ? 'bg-amber-950/40 text-amber-500 border-amber-905'
                                 : u.role === 'vip'
                                   ? 'bg-fuchsia-950/40 text-fuchsia-400 border-fuchsia-900/20'
                                   : 'bg-slate-950/40 text-slate-400 border-slate-900/20'
-                          }`}>
+                            }`}>
                             {u.role === 'admin' ? 'Admin' : u.role === 'dichgia' ? 'Dịch giả' : u.role === 'vip' ? 'VIP' : 'Thành viên'}
                           </span>
                         </td>
@@ -1866,6 +1929,28 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                 </table>
               </div>
             )}
+
+            <div className="flex justify-center items-center gap-2 p-4 border-t border-white/5 bg-zinc-950/40">
+              <button
+                type="button"
+                onClick={() => setUsersCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safeUsersCurrentPage === 1}
+                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-slate-300 font-semibold rounded text-[10px] transition-colors cursor-pointer"
+              >
+                Trước
+              </button>
+              <span className="text-[10px] text-zinc-500 font-mono">
+                Trang {safeUsersCurrentPage} / {totalUsersPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setUsersCurrentPage(p => Math.min(totalUsersPages, p + 1))}
+                disabled={safeUsersCurrentPage === totalUsersPages}
+                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-slate-300 font-semibold rounded text-[10px] transition-colors cursor-pointer"
+              >
+                Tiếp
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1939,7 +2024,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                   <h3 className="text-sm font-bold uppercase tracking-wider font-sans">Khôi phục / Nạp dữ liệu</h3>
                 </div>
                 <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-                  Chọn file backup `.json` hợp lệ từ máy tính của bạn để khôi phục cơ sở dữ liệu. 
+                  Chọn file backup `.json` hợp lệ từ máy tính của bạn để khôi phục cơ sở dữ liệu.
                   <span className="text-red-400 font-bold block mt-1">⚠️ Cảnh báo: Thao tác này sẽ ghi đè và thay thế toàn bộ dữ liệu hiện tại trên hệ thống!</span>
                 </p>
               </div>
@@ -1992,7 +2077,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
                     reader.readAsText(file);
                   }}
                 />
-                
+
                 <button
                   type="button"
                   onClick={() => {
