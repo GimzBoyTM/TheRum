@@ -94,6 +94,80 @@ export default function App() {
   // User's bookmarks cache
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
+  // Real-time online count
+  const [onlineCount, setOnlineCount] = useState<number>(1);
+
+  // Real-time online user count tracking
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let pollInterval: any = null;
+    const clientId = Math.random().toString(36).substring(2, 15);
+
+    const startSse = () => {
+      eventSource = new EventSource('/api/online-count/sse');
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (typeof data.onlineCount === 'number') {
+            setOnlineCount(data.onlineCount);
+          }
+        } catch (err) {
+          console.error('Error parsing SSE data:', err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        startPolling();
+      };
+    };
+
+    const startPolling = () => {
+      if (pollInterval) return;
+
+      const doPing = async () => {
+        try {
+          const res = await fetch('/api/online-count/ping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setOnlineCount(data.onlineCount);
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      };
+
+      doPing();
+      pollInterval = setInterval(doPing, 15000);
+    };
+
+    startSse();
+
+    const initialPing = setTimeout(() => {
+      if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+        startPolling();
+      }
+    }, 3000);
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+      clearTimeout(initialPing);
+    };
+  }, []);
+
   // Sync hash routing on window load or popstate
   useEffect(() => {
     const handleHash = () => {
@@ -325,6 +399,7 @@ export default function App() {
           setSearch(val);
           setPage(1);
         }}
+        onlineCount={onlineCount}
       />
 
       {/* Body content wraps */}

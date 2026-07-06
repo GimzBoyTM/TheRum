@@ -7,6 +7,45 @@ import {
 } from 'lucide-react';
 import { Game, User } from '../types';
 
+const PRESET_LINKS = [
+  { label: 'Google Drive', domain: 'drive.google.com' },
+  { label: 'Pixel Drain', domain: 'pixeldrain.com' },
+  { label: 'rootz.so', domain: 'rootz.so' },
+  { label: 'MEGA', domain: 'mega.nz' },
+  { label: 'Buzzheavier', domain: 'buzzheavier.com' },
+  { label: 'Workupload', domain: 'workupload.com' },
+  { label: 'Gofile', domain: 'gofile.io' },
+  { label: 'Vikingfile', domain: 'vikingfile.com' }
+];
+
+const getDomainFromUrl = (url: string): string => {
+  try {
+    if (!url) return '';
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
+    }
+    const parsed = new URL(formattedUrl);
+    return parsed.hostname.replace('www.', '');
+  } catch (e) {
+    return '';
+  }
+};
+
+const getLinkFavicon = (label: string, url: string): string => {
+  const domain = getDomainFromUrl(url);
+  if (domain) {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  }
+  
+  const preset = PRESET_LINKS.find(p => label.toLowerCase().includes(p.label.toLowerCase()));
+  if (preset) {
+    return `https://www.google.com/s2/favicons?domain=${preset.domain}&sz=64`;
+  }
+  
+  return `https://www.google.com/s2/favicons?domain=link.com&sz=64`;
+};
+
 interface GameDetailProps {
   game: Game;
   user: User | null;
@@ -450,9 +489,15 @@ export default function GameDetail({
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${link.isVip ? 'text-fuchsia-300' : 'text-zinc-200'}`}>
+                              <p className={`text-sm font-bold truncate flex items-center gap-2 ${link.isVip ? 'text-fuchsia-300' : 'text-zinc-200'}`}>
                                 {link.device === 'pc' && <Monitor className="w-4 h-4 text-emerald-400 shrink-0" />}
                                 {link.device === 'mobile' && <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />}
+                                <img 
+                                  src={getLinkFavicon(link.label, link.url)} 
+                                  alt="" 
+                                  className="w-4.5 h-4.5 rounded-sm object-contain shrink-0"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://www.google.com/s2/favicons?domain=link.com&sz=64'; }}
+                                />
                                 <span>{link.label}</span>
                               </p>
                               {link.isVip && (

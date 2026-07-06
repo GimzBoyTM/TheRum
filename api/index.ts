@@ -31,6 +31,96 @@ initDriveService();
     return null;
   };
 
+  const verifyTurnstileToken = async (token: string): Promise<boolean> => {
+    if (!token) return false;
+    const secretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '1x00000000000000000000000000000000';
+    try {
+      const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          secret: secretKey,
+          response: token,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Turnstile siteverify responded with status ${response.status}`);
+        return false;
+      }
+
+      const data = await response.json();
+      return !!data.success;
+    } catch (err) {
+      console.error('Turnstile verification error:', err);
+      return false;
+    }
+  };
+
+  // Online Tracking Setup
+  let activeSseClients: any[] = [];
+  const activePollingClients = new Map<string, number>();
+
+  // Clean up stale polling clients every 30 seconds
+  setInterval(() => {
+    const now = Date.now();
+    let changed = false;
+    for (const [clientId, lastSeen] of activePollingClients.entries()) {
+      if (now - lastSeen > 35000) {
+        activePollingClients.delete(clientId);
+        changed = true;
+      }
+    }
+    if (changed) {
+      broadcastOnlineCount();
+    }
+  }, 10000);
+
+  const getOnlineCount = () => {
+    const sseCount = activeSseClients.length;
+    const pollingCount = activePollingClients.size;
+    return Math.max(1, sseCount > 0 ? sseCount : pollingCount);
+  };
+
+  const broadcastOnlineCount = () => {
+    const count = getOnlineCount();
+    const data = JSON.stringify({ onlineCount: count });
+    activeSseClients.forEach(client => {
+      try {
+        client.write(`data: ${data}\n\n`);
+      } catch (e) {
+        // Ignore
+      }
+    });
+  };
+
+  app.get('/api/online-count/sse', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    res.write(`data: ${JSON.stringify({ onlineCount: getOnlineCount() })}\n\n`);
+
+    activeSseClients.push(res);
+    broadcastOnlineCount();
+
+    req.on('close', () => {
+      activeSseClients = activeSseClients.filter(c => c !== res);
+      broadcastOnlineCount();
+    });
+  });
+
+  app.post('/api/online-count/ping', (req, res) => {
+    const { clientId } = req.body;
+    if (clientId) {
+      activePollingClients.set(clientId, Date.now());
+    }
+    res.json({ onlineCount: getOnlineCount() });
+  });
+
   // Middleware for checking Auth
   const authMiddleware = (req: any, res: any, next: any) => {
     let token = null;
@@ -85,8 +175,9 @@ initDriveService();
   app.post('/api/auth/register', async (req, res) => {
     try {
       const { username, email, password, captchaVerified } = req.body;
-      if (!captchaVerified) {
-        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      const turnstileValid = await verifyTurnstileToken(captchaVerified);
+      if (!turnstileValid) {
+        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
       }
       if (!username || !email || !password) {
         return res.status(400).json({ error: 'Vui lòng cung cấp đầy đủ thông tin đăng ký' });
@@ -125,8 +216,9 @@ initDriveService();
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { usernameOrEmail, password, captchaVerified } = req.body;
-      if (!captchaVerified) {
-        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      const turnstileValid = await verifyTurnstileToken(captchaVerified);
+      if (!turnstileValid) {
+        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
       }
       if (!usernameOrEmail || !password) {
         return res.status(400).json({ error: 'Vui lòng điền tài khoản và mật khẩu' });
@@ -180,8 +272,9 @@ initDriveService();
     try {
       const { currentPassword, newPassword, captchaVerified } = req.body;
 
-      if (!captchaVerified) {
-        return res.status(400).json({ error: 'Vui lòng hoàn thành xác thực robot' });
+      const turnstileValid = await verifyTurnstileToken(captchaVerified);
+      if (!turnstileValid) {
+        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
       }
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới' });

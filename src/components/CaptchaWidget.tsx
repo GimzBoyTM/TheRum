@@ -1,130 +1,129 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, animate } from 'motion/react';
-import { Shield, CheckCircle2, ArrowRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
+// Declare Turnstile global functions for TypeScript safety
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: any) => string;
+      reset: (widgetId: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
 
 interface CaptchaWidgetProps {
-  onVerify: (verified: boolean) => void;
+  onVerify: (token: string | null) => void;
   resetKey?: number;
 }
 
 export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetProps) {
-  const [verified, setVerified] = useState(false);
-  const [dragProgress, setDragProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const [maxDrag, setMaxDrag] = useState(0);
+  const widgetIdRef = useRef<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const x = useMotionValue(0);
+  // Use fallback developer/testing key if site key is not defined in env
+  const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
 
-  // Compute maximum drag distance based on track width minus handle width
-  const updateMaxDrag = () => {
-    if (containerRef.current && handleRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const handleWidth = handleRef.current.clientWidth;
-      // Allow 4px margin (2px left, 2px right)
-      setMaxDrag(Math.max(0, containerWidth - handleWidth - 4));
+  useEffect(() => {
+    // Dynamic script injection: load the script only when the widget is mounted
+    let script = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]') as HTMLScriptElement | null;
+    if (!script) {
+      const newScript = document.createElement('script');
+      newScript.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      newScript.async = true;
+      newScript.defer = true;
+      document.body.appendChild(newScript);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    updateMaxDrag();
-    // Recalculate on window resize
-    window.addEventListener('resize', updateMaxDrag);
-    return () => window.removeEventListener('resize', updateMaxDrag);
-  }, [verified]);
+    let active = true;
 
-  // Reset widget when resetKey or verification status changes
-  useEffect(() => {
-    x.set(0);
-    setDragProgress(0);
-    setVerified(false);
-    onVerify(false);
-    // Give browser a tick to render and update max drag
-    setTimeout(updateMaxDrag, 50);
-  }, [resetKey]);
+    const renderTurnstile = () => {
+      if (!containerRef.current || !window.turnstile) return;
 
-  // Listen to motion value to compute drag progress percentage
-  useEffect(() => {
-    const unsubscribe = x.on('change', (latest) => {
-      if (maxDrag > 0) {
-        setDragProgress(Math.min(1, Math.max(0, latest / maxDrag)));
+      try {
+        // Clear any previous widget instance
+        if (widgetIdRef.current) {
+          try {
+            window.turnstile.remove(widgetIdRef.current);
+          } catch (e) {
+            // Ignored
+          }
+          widgetIdRef.current = null;
+        }
+
+        const widgetId = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme: 'dark',
+          callback: (token: string) => {
+            if (active) {
+              setError(null);
+              onVerify(token);
+            }
+          },
+          'expired-callback': () => {
+            if (active) {
+              onVerify(null);
+            }
+          },
+          'error-callback': (err: any) => {
+            console.error('Turnstile widget error:', err);
+            if (active) {
+              setError('Xác thực Turnstile thất bại. Vui lòng tải lại.');
+              onVerify(null);
+            }
+          }
+        });
+        widgetIdRef.current = widgetId;
+      } catch (err) {
+        console.error('Failed to render Turnstile:', err);
       }
-    });
-    return () => unsubscribe();
-  }, [maxDrag, x]);
+    };
 
-  const handleDragEnd = () => {
-    if (verified) return;
-    const currentX = x.get();
-    // Verify if dragged to at least 95% of the track
-    if (currentX >= maxDrag * 0.95) {
-      animate(x, maxDrag, { type: 'spring', stiffness: 400, damping: 30 });
-      setVerified(true);
-      onVerify(true);
+    // Polling mechanism to wait for the window.turnstile global object to be loaded
+    let interval: any = null;
+    if (window.turnstile) {
+      renderTurnstile();
     } else {
-      // Snap back to 0
-      animate(x, 0, { type: 'spring', stiffness: 350, damping: 25 });
+      interval = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(interval);
+          renderTurnstile();
+        }
+      }, 100);
     }
-  };
+
+    return () => {
+      active = false;
+      if (interval) clearInterval(interval);
+      if (widgetIdRef.current && window.turnstile) {
+        try {
+          window.turnstile.remove(widgetIdRef.current);
+        } catch (e) {
+          // Ignored
+        }
+      }
+    };
+  }, [resetKey, siteKey]);
 
   return (
-    <div className="space-y-1.5 w-full">
-      <label className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest block">
+    <div className="space-y-1.5 w-full flex flex-col items-center">
+      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block text-center w-full">
         Xác thực bảo mật (CAPTCHA)
       </label>
       
       <div 
         ref={containerRef}
-        id="captcha-track"
-        className={`relative w-full h-11 rounded-xl border select-none overflow-hidden flex items-center justify-center transition-all duration-300 ${
-          verified 
-            ? 'bg-emerald-500/10 border-emerald-500/30' 
-            : 'bg-zinc-900/60 border-white/5 hover:border-white/10'
-        }`}
-      >
-        {/* Fill color indicating drag progress */}
-        <div 
-          className="absolute left-0 top-0 bottom-0 bg-emerald-500/10 pointer-events-none" 
-          style={{ width: `${dragProgress * 100}%` }}
-        />
+        id="captcha-turnstile-container"
+        className="w-full flex justify-center py-1 min-h-[65px]"
+      />
 
-        {/* Informative placeholder text */}
-        <span 
-          className={`absolute text-xs font-semibold pointer-events-none transition-all duration-200 select-none ${
-            verified ? 'text-emerald-450 font-bold' : 'text-zinc-500'
-          }`}
-          style={{ opacity: verified ? 1 : 1 - dragProgress * 1.5 }}
-        >
-          {verified ? (
-            <span className="flex items-center gap-1.5 animate-pulse">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Đã xác thực tôi là con người
-            </span>
-          ) : (
-            'Kéo thanh trượt để xác minh'
-          )}
+      {error && (
+        <span className="text-[11px] font-semibold text-red-400 text-center block">
+          {error}
         </span>
-
-        {/* Drag handle */}
-        {!verified ? (
-          <motion.div
-            ref={handleRef}
-            drag="x"
-            dragConstraints={{ left: 0, right: maxDrag }}
-            dragElastic={0}
-            dragMomentum={false}
-            onDragEnd={handleDragEnd}
-            style={{ x }}
-            className="absolute left-[2px] top-[2px] bottom-[2px] w-9 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg border border-white/10 flex items-center justify-center cursor-grab active:cursor-grabbing transition-colors shadow-sm select-none z-10"
-          >
-            <Shield className="w-4 h-4" />
-          </motion.div>
-        ) : (
-          <div className="absolute right-[2px] top-[2px] bottom-[2px] w-9 bg-emerald-500 text-slate-950 rounded-lg flex items-center justify-center shadow-md select-none z-10">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

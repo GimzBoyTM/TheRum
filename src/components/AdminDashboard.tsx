@@ -2,10 +2,88 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus, Edit, Trash2, CheckCircle2, AlertOctagon, LayoutDashboard,
   Settings, Key, Trash, Link, Globe, AlertCircle, Sparkles, FolderPlus, Compass,
-  Database, Download, Upload
+  Database, Download, Upload, ChevronDown
 } from 'lucide-react';
-import { Game, BrokenReport, User, GameRequest } from '../types';
+import { Game, BrokenReport, User, GameRequest, DownloadLink } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
+
+export const PRESET_LINKS = [
+  { label: 'Google Drive', domain: 'drive.google.com' },
+  { label: 'Pixel Drain', domain: 'pixeldrain.com' },
+  { label: 'rootz.so', domain: 'rootz.so' },
+  { label: 'MEGA', domain: 'mega.nz' },
+  { label: 'Buzzheavier', domain: 'buzzheavier.com' },
+  { label: 'Workupload', domain: 'workupload.com' },
+  { label: 'Gofile', domain: 'gofile.io' },
+  { label: 'Vikingfile', domain: 'vikingfile.com' }
+];
+
+export const getDomainFromUrl = (url: string): string => {
+  try {
+    if (!url) return '';
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
+    }
+    const parsed = new URL(formattedUrl);
+    return parsed.hostname.replace('www.', '');
+  } catch (e) {
+    return '';
+  }
+};
+
+export const extractDomainAndName = (urlStr: string) => {
+  try {
+    if (!urlStr) return null;
+    let formatted = urlStr.trim();
+    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = 'https://' + formatted;
+    }
+    const url = new URL(formatted);
+    const hostname = url.hostname.replace('www.', '');
+    
+    let name = hostname;
+    if (hostname.includes('drive.google.com') || hostname.includes('google.com')) {
+      name = 'Google Drive';
+    } else if (hostname.includes('pixeldrain.com')) {
+      name = 'Pixel Drain';
+    } else if (hostname.includes('rootz.so')) {
+      name = 'rootz.so';
+    } else if (hostname.includes('mega.nz')) {
+      name = 'MEGA';
+    } else if (hostname.includes('buzzheavier.com')) {
+      name = 'Buzzheavier';
+    } else if (hostname.includes('workupload.com')) {
+      name = 'Workupload';
+    } else if (hostname.includes('gofile.io')) {
+      name = 'Gofile';
+    } else if (hostname.includes('vikingfile.com')) {
+      name = 'Vikingfile';
+    } else {
+      const parts = hostname.split('.');
+      if (parts.length >= 2) {
+        name = parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1);
+      }
+    }
+    return { domain: hostname, name };
+  } catch (e) {
+    return null;
+  }
+};
+
+export const getLinkFavicon = (label: string, url: string): string => {
+  const domain = getDomainFromUrl(url);
+  if (domain) {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  }
+  
+  const preset = PRESET_LINKS.find(p => label.toLowerCase().includes(p.label.toLowerCase()));
+  if (preset) {
+    return `https://www.google.com/s2/favicons?domain=${preset.domain}&sz=64`;
+  }
+  
+  return `https://www.google.com/s2/favicons?domain=link.com&sz=64`;
+};
 
 interface AdminDashboardProps {
   currentUser: User | null;
@@ -25,6 +103,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   const [reports, setReports] = useState<BrokenReport[]>([]);
   const [requestsList, setRequestsList] = useState<GameRequest[]>([]);
   const [stats, setStats] = useState({ totalGames: 0, totalUsers: 0, pendingReports: 0, pendingRequests: 0, totalDownloads: 0 });
+  const [openLinkDropdownIdx, setOpenLinkDropdownIdx] = useState<number | null>(null);
 
   // Pagination states
   const [gamesCurrentPage, setGamesCurrentPage] = useState(1);
@@ -192,7 +271,7 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   const [gameChangelogs, setGameChangelogs] = useState<{ version: string; date: string; content: string }[]>([]);
   const [newLogVersion, setNewLogVersion] = useState('');
   const [newLogContent, setNewLogContent] = useState('');
-  const [downloadLinks, setDownloadLinks] = useState<{ label: string; url: string; password?: string; isVip?: boolean }[]>([
+  const [downloadLinks, setDownloadLinks] = useState<DownloadLink[]>([
     { label: 'Google Drive', url: '' }
   ]);
 
@@ -327,6 +406,19 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
   const handleLinkChange = (idx: number, field: string, value: any) => {
     const updated = [...downloadLinks] as any;
     updated[idx][field] = value;
+    
+    // Auto-populate label on pasting/changing url
+    if (field === 'url' && value) {
+      const detected = extractDomainAndName(value);
+      if (detected) {
+        // Only override label if it is currently empty or matches a default placeholder
+        const currentLabel = updated[idx].label || '';
+        const isDefault = currentLabel === '' || currentLabel === 'Google Drive' || PRESET_LINKS.some(p => p.label === currentLabel);
+        if (isDefault) {
+          updated[idx].label = detected.name;
+        }
+      }
+    }
     setDownloadLinks(updated);
   };
 
@@ -1235,16 +1327,59 @@ export default function AdminDashboard({ currentUser, onRefreshedGames, gamesLis
             <div className="space-y-2.5">
               {downloadLinks.map((link, idx) => (
                 <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 border-b border-slate-900/40 pb-2.5 sm:border-0 sm:pb-0">
-                  <div className="relative w-full sm:w-1/4">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 font-bold text-[10px] uppercase font-mono">Label</span>
-                    <input
-                      type="text"
-                      required
-                      value={link.label}
-                      onChange={(e) => handleLinkChange(idx, 'label', e.target.value)}
-                      placeholder="ví dụ: Google Drive (PC)"
-                      className="w-full pl-12 pr-2 py-2 bg-slate-950 border border-slate-850 text-xs rounded-lg text-slate-300 outline-none"
-                    />
+                  <div className="relative w-full sm:w-[26%] z-30">
+                    <div className="relative flex items-center bg-slate-950 border border-slate-850 rounded-lg">
+                      <div className="pl-2.5 shrink-0 flex items-center">
+                        <img 
+                          src={getLinkFavicon(link.label, link.url)} 
+                          alt="" 
+                          className="w-4 h-4 rounded-sm object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://www.google.com/s2/favicons?domain=link.com&sz=64'; }}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={link.label}
+                        onChange={(e) => handleLinkChange(idx, 'label', e.target.value)}
+                        placeholder="Tên link (ví dụ: Google Drive)"
+                        className="w-full pl-2 pr-6 py-2 bg-transparent text-xs text-slate-300 outline-none placeholder:text-zinc-650"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOpenLinkDropdownIdx(openLinkDropdownIdx === idx ? null : idx)}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      
+                      {openLinkDropdownIdx === idx && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setOpenLinkDropdownIdx(null)} />
+                          <div className="absolute left-0 right-0 top-full mt-1 bg-zinc-950 border border-white/10 rounded-lg shadow-2xl overflow-hidden z-50 py-1">
+                            {PRESET_LINKS.map(p => (
+                              <button
+                                key={p.label}
+                                type="button"
+                                onClick={() => {
+                                  handleLinkChange(idx, 'label', p.label);
+                                  setOpenLinkDropdownIdx(null);
+                                }}
+                                className="w-full text-left px-3 py-1.5 hover:bg-zinc-900 flex items-center gap-2 text-xs text-zinc-355 cursor-pointer"
+                              >
+                                <img 
+                                  src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=64`}
+                                  alt="" 
+                                  className="w-3.5 h-3.5 rounded-sm object-contain"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://www.google.com/s2/favicons?domain=link.com&sz=64'; }}
+                                />
+                                <span>{p.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="relative w-full sm:w-[15%]">

@@ -16,13 +16,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
   if (!isOpen) return null;
 
   const handleResetCaptcha = () => {
-    setIsCaptchaVerified(false);
+    setCaptchaToken(null);
     setCaptchaResetKey(prev => prev + 1);
   };
 
@@ -30,7 +30,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     e.preventDefault();
     setError('');
 
-    if (!isCaptchaVerified) {
+    if (!captchaToken) {
       setError('Vui lòng hoàn thành xác thực robot');
       return;
     }
@@ -39,8 +39,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     const body = isLogin 
-      ? { usernameOrEmail: username || email, password, captchaVerified: isCaptchaVerified }
-      : { username, email, password, captchaVerified: isCaptchaVerified };
+      ? { usernameOrEmail: username || email, password, captchaVerified: captchaToken }
+      : { username, email, password, captchaVerified: captchaToken };
 
     try {
       const res = await fetch(endpoint, {
@@ -153,14 +153,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
             {/* Security Captcha Checkbox/Slider */}
             <CaptchaWidget 
-              onVerify={setIsCaptchaVerified}
+              onVerify={setCaptchaToken}
               resetKey={captchaResetKey}
             />
 
             <button
                id="auth-submit-btn"
               type="submit"
-              disabled={loading || !isCaptchaVerified}
+              disabled={loading || !captchaToken}
               className="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-450 disabled:bg-emerald-800 disabled:cursor-not-allowed text-slate-950 font-bold font-sans rounded-xl shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25 transition-all text-sm mt-2 flex items-center justify-center gap-2"
             >
               {loading ? (

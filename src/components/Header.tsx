@@ -11,6 +11,7 @@ interface HeaderProps {
   onChangePassword: () => void;
   searchTerm: string;
   onSearchChange: (val: string) => void;
+  onlineCount: number;
 }
 
 export default function Header({ 
@@ -21,26 +22,39 @@ export default function Header({
   onTriggerLogin,
   onChangePassword,
   searchTerm,
-  onSearchChange
+  onSearchChange,
+  onlineCount
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#09090b]/60 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
-        {/* Brand Logo */}
-        <div 
-          onClick={() => onNavigate('/')} 
-          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
-        >
-          <img 
-            src={iconUrl} 
-            alt="TheRum Icon" 
-            className="w-8 h-8 object-contain rounded-lg group-hover:scale-105 transition-transform shadow-md shadow-emerald-500/25" 
-          />
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-black tracking-tight text-white leading-none group-hover:text-emerald-400 transition-colors">
-              TheRum<span className="text-emerald-500 underline decoration-2 underline-offset-4 font-black">VN</span>
-            </h1>
+        {/* Brand Logo & Online Counter */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div 
+            onClick={() => onNavigate('/')} 
+            className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
+          >
+            <img 
+              src={iconUrl} 
+              alt="TheRum Icon" 
+              className="w-8 h-8 object-contain rounded-lg group-hover:scale-105 transition-transform shadow-md shadow-emerald-500/25" 
+            />
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-black tracking-tight text-white leading-none group-hover:text-emerald-400 transition-colors">
+                TheRum<span className="text-emerald-500 underline decoration-2 underline-offset-4 font-black">VN</span>
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900/60 border border-white/5 rounded-full select-none shadow-inner shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] font-bold text-zinc-400 font-mono leading-none tracking-tight">
+              {onlineCount} <span className="text-zinc-500 font-sans font-medium">online</span>
+            </span>
           </div>
         </div>
 

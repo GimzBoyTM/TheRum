@@ -14,13 +14,13 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
   if (!isOpen) return null;
 
   const handleResetCaptcha = () => {
-    setIsCaptchaVerified(false);
+    setCaptchaToken(null);
     setCaptchaResetKey(prev => prev + 1);
   };
 
@@ -43,7 +43,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     setError('');
     setSuccess('');
 
-    if (!isCaptchaVerified) {
+    if (!captchaToken) {
       setError('Vui lòng hoàn thành xác thực robot');
       return;
     }
@@ -78,7 +78,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
         body: JSON.stringify({
           currentPassword,
           newPassword,
-          captchaVerified: isCaptchaVerified
+          captchaVerified: captchaToken
         })
       });
 
@@ -198,14 +198,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
             {/* Captcha */}
             <CaptchaWidget 
-              onVerify={setIsCaptchaVerified}
+              onVerify={setCaptchaToken}
               resetKey={captchaResetKey}
             />
 
             <button
               id="change-password-submit-btn"
               type="submit"
-              disabled={loading || !isCaptchaVerified}
+              disabled={loading || !captchaToken}
               className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-800 disabled:cursor-not-allowed text-slate-950 font-bold font-sans rounded-xl shadow-lg shadow-amber-500/15 hover:shadow-amber-500/25 transition-all text-sm mt-2 flex items-center justify-center gap-2"
             >
               {loading ? (
