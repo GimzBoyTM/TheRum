@@ -21,7 +21,7 @@ export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetP
   const [error, setError] = useState<string | null>(null);
 
   // Use fallback developer/testing key if site key is not defined in env (Google reCAPTCHA v2 Test Key)
-  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeGxAcTAAAAAJcZ5cw3lhVAlBP76JHbefIBF3pX';
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
 
   useEffect(() => {
     // Dynamic script injection: load the script only when the widget is mounted

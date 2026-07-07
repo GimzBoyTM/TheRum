@@ -33,7 +33,7 @@ initDriveService();
 
   const verifyRecaptchaToken = async (token: string): Promise<boolean> => {
     if (!token) return false;
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LeGxAcTAAAAAD19URmZb3mE3ELaIP10SG081g3H';
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LeIxAcTAAAAAGG-vFIhAigN21T42C_f59pXo2T_';
     try {
       const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
