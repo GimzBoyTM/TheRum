@@ -31,30 +31,30 @@ initDriveService();
     return null;
   };
 
-  const verifyTurnstileToken = async (token: string): Promise<boolean> => {
+  const verifyRecaptchaToken = async (token: string): Promise<boolean> => {
     if (!token) return false;
-    const secretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '1x00000000000000000000000000000000';
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LeGxAcTAAAAAD19URmZb3mE3ELaIP10SG081g3H';
     try {
-      const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
+        body: new URLSearchParams({
           secret: secretKey,
           response: token,
-        }),
+        }).toString(),
       });
 
       if (!response.ok) {
-        console.error(`Turnstile siteverify responded with status ${response.status}`);
+        console.error(`reCAPTCHA siteverify responded with status ${response.status}`);
         return false;
       }
 
       const data = await response.json();
       return !!data.success;
     } catch (err) {
-      console.error('Turnstile verification error:', err);
+      console.error('reCAPTCHA verification error:', err);
       return false;
     }
   };
@@ -175,9 +175,9 @@ initDriveService();
   app.post('/api/auth/register', async (req, res) => {
     try {
       const { username, email, password, captchaVerified } = req.body;
-      const turnstileValid = await verifyTurnstileToken(captchaVerified);
-      if (!turnstileValid) {
-        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
+      const recaptchaValid = await verifyRecaptchaToken(captchaVerified);
+      if (!recaptchaValid) {
+        return res.status(400).json({ error: 'Xác thực reCAPTCHA không hợp lệ hoặc đã hết hạn' });
       }
       if (!username || !email || !password) {
         return res.status(400).json({ error: 'Vui lòng cung cấp đầy đủ thông tin đăng ký' });
@@ -216,9 +216,9 @@ initDriveService();
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { usernameOrEmail, password, captchaVerified } = req.body;
-      const turnstileValid = await verifyTurnstileToken(captchaVerified);
-      if (!turnstileValid) {
-        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
+      const recaptchaValid = await verifyRecaptchaToken(captchaVerified);
+      if (!recaptchaValid) {
+        return res.status(400).json({ error: 'Xác thực reCAPTCHA không hợp lệ hoặc đã hết hạn' });
       }
       if (!usernameOrEmail || !password) {
         return res.status(400).json({ error: 'Vui lòng điền tài khoản và mật khẩu' });
@@ -272,9 +272,9 @@ initDriveService();
     try {
       const { currentPassword, newPassword, captchaVerified } = req.body;
 
-      const turnstileValid = await verifyTurnstileToken(captchaVerified);
-      if (!turnstileValid) {
-        return res.status(400).json({ error: 'Xác thực Turnstile không hợp lệ hoặc đã hết hạn' });
+      const recaptchaValid = await verifyRecaptchaToken(captchaVerified);
+      if (!recaptchaValid) {
+        return res.status(400).json({ error: 'Xác thực reCAPTCHA không hợp lệ hoặc đã hết hạn' });
       }
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới' });

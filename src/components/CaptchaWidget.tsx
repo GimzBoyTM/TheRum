@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-// Declare Turnstile global functions for TypeScript safety
+// Declare grecaptcha global functions for TypeScript safety
 declare global {
   interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: any) => string;
-      reset: (widgetId: string) => void;
-      remove: (widgetId: string) => void;
+    grecaptcha?: {
+      render: (container: string | HTMLElement, options: any) => number;
+      reset: (widgetId?: number) => void;
     };
   }
 }
@@ -18,18 +17,18 @@ interface CaptchaWidgetProps {
 
 export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | null>(null);
+  const widgetIdRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Use fallback developer/testing key if site key is not defined in env
-  const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+  // Use fallback developer/testing key if site key is not defined in env (Google reCAPTCHA v2 Test Key)
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeGxAcTAAAAAJcZ5cw3lhVAlBP76JHbefIBF3pX';
 
   useEffect(() => {
     // Dynamic script injection: load the script only when the widget is mounted
-    let script = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]') as HTMLScriptElement | null;
+    let script = document.querySelector('script[src*="google.com/recaptcha/api.js"]') as HTMLScriptElement | null;
     if (!script) {
       const newScript = document.createElement('script');
-      newScript.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      newScript.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
       newScript.async = true;
       newScript.defer = true;
       document.body.appendChild(newScript);
@@ -39,21 +38,24 @@ export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetP
   useEffect(() => {
     let active = true;
 
-    const renderTurnstile = () => {
-      if (!containerRef.current || !window.turnstile) return;
+    const renderRecaptcha = () => {
+      if (!containerRef.current || !window.grecaptcha) return;
 
       try {
         // Clear any previous widget instance
-        if (widgetIdRef.current) {
+        if (widgetIdRef.current !== null) {
           try {
-            window.turnstile.remove(widgetIdRef.current);
+            window.grecaptcha.reset(widgetIdRef.current);
           } catch (e) {
             // Ignored
           }
           widgetIdRef.current = null;
         }
 
-        const widgetId = window.turnstile.render(containerRef.current, {
+        // Clean container
+        containerRef.current.innerHTML = '';
+
+        const widgetId = window.grecaptcha.render(containerRef.current, {
           sitekey: siteKey,
           theme: 'dark',
           callback: (token: string) => {
@@ -67,29 +69,29 @@ export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetP
               onVerify(null);
             }
           },
-          'error-callback': (err: any) => {
-            console.error('Turnstile widget error:', err);
+          'error-callback': () => {
+            console.error('reCAPTCHA widget error');
             if (active) {
-              setError('Xác thực Turnstile thất bại. Vui lòng tải lại.');
+              setError('Xác thực reCAPTCHA thất bại. Vui lòng thử lại.');
               onVerify(null);
             }
           }
         });
         widgetIdRef.current = widgetId;
       } catch (err) {
-        console.error('Failed to render Turnstile:', err);
+        console.error('Failed to render reCAPTCHA:', err);
       }
     };
 
-    // Polling mechanism to wait for the window.turnstile global object to be loaded
+    // Polling mechanism to wait for the window.grecaptcha global object to be loaded
     let interval: any = null;
-    if (window.turnstile) {
-      renderTurnstile();
+    if (window.grecaptcha) {
+      renderRecaptcha();
     } else {
       interval = setInterval(() => {
-        if (window.turnstile) {
+        if (window.grecaptcha) {
           clearInterval(interval);
-          renderTurnstile();
+          renderRecaptcha();
         }
       }, 100);
     }
@@ -97,9 +99,9 @@ export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetP
     return () => {
       active = false;
       if (interval) clearInterval(interval);
-      if (widgetIdRef.current && window.turnstile) {
+      if (widgetIdRef.current !== null && window.grecaptcha) {
         try {
-          window.turnstile.remove(widgetIdRef.current);
+          window.grecaptcha.reset(widgetIdRef.current);
         } catch (e) {
           // Ignored
         }
@@ -115,8 +117,8 @@ export default function CaptchaWidget({ onVerify, resetKey = 0 }: CaptchaWidgetP
       
       <div 
         ref={containerRef}
-        id="captcha-turnstile-container"
-        className="w-full flex justify-center py-1 min-h-[65px]"
+        id="captcha-recaptcha-container"
+        className="w-full flex justify-center py-1 min-h-[78px]"
       />
 
       {error && (
