@@ -12,6 +12,7 @@ import AgeVerification from './components/AgeVerification';
 import { Game, User } from './types';
 import { Sparkles, Calendar, BookOpen, Key, Link2, Monitor, AlertCircle, Compass, RotateCcw, ChevronLeft, ChevronRight, Lock, BookMarked, UserCheck, ChevronDown, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 
 const SORT_OPTIONS = [
   { value: 'newest_updated', label: 'Mới Cập Nhật Nhật ký' },
@@ -447,7 +448,7 @@ export default function App() {
                     </div>
                     <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Cộng đồng chia sẻ game lọ Việt Nam</h2>
                     <p className="text-xs sm:text-sm text-zinc-400 font-medium max-w-lg leading-relaxed">
-                      Kho tàng game lọ cốt truyện sâu, tiểu thuyết hình ảnh lãng mạn lôi cuốn được biên dịch hoàn chỉnh sang tiếng Việt thuần khiết (hoặc không).
+                      Kho tàng game lọ cốt truyện sâu, tiểu thuyết hình ảnh lãng mạn lôi cuốn được biên d���ch hoàn chỉnh sang tiếng Việt thuần khiết (hoặc không).
                     </p>
                   </div>
                   <div className="flex flex-col items-stretch gap-2.5 shrink-0 relative z-10 w-full sm:w-[200px]">
@@ -779,6 +780,9 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
 
     </div>
   );
